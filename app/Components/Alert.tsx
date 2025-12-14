@@ -1,13 +1,13 @@
 "use client";
 
 import { AlertCircle, CheckCircle2, Info, TriangleAlert } from "lucide-react";
-import React from "react";
+import { JSX } from "react";
 
 type Variant = "success" | "error" | "warning" | "info";
 
 const variantStyles: Record<
   Variant,
-  { bg: string; border: string; text: string; icon: JSX }
+  { bg: string; border: string; text: string; icon: JSX.Element }
 > = {
   success: {
     bg: "bg-green-900/25",
