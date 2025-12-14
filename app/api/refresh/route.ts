@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 export async function POST(req: NextRequest) {
-  const cookieRefresh = req.cookies.get("refreshToken")?.value;
-  let refresh = cookieRefresh;
+  const body = await req.json();
+  const refreshToken = body.refreshToken;
+  let refresh = refreshToken;
 
   // Fallback: accept body refreshToken if provided (legacy clients)
   if (!refresh) {
@@ -49,21 +50,7 @@ export async function POST(req: NextRequest) {
       expiresIn: "5m",
     });
 
-    const response = NextResponse.json(
-      { message: "Refresh Success" },
-      { status: 200 }
-    );
-
-    const secure = process.env.NODE_ENV === "production";
-    response.cookies.set("token", newAccessToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure,
-      maxAge: 60 * 5,
-      path: "/",
-    });
-
-    return response;
+    return NextResponse.json({ token: newAccessToken }, { status: 200 });
   } catch (err) {
     return NextResponse.json(
       { message: "Expired or invalid refresh token" },

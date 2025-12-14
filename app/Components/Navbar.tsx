@@ -73,13 +73,16 @@ function Navbar() {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
+        console.log("error occurred");
         const originalRequest = error.config;
 
         // If access token expired
         if (error.response?.status === 403 && !originalRequest._retry) {
+          console.log("retrying");
           originalRequest._retry = true;
-
+          console.log("before token");
           const refreshToken = localStorage.getItem("refreshToken");
+          console.log("Here is refresh token : ", refreshToken);
 
           try {
             const { data } = await axios.post("/api/refresh", {
@@ -89,14 +92,15 @@ function Navbar() {
             if (!data?.token) {
               throw new Error("No token in refresh response");
             }
-
+            console.log("Got new token", data.token);
             localStorage.setItem("token", data.token);
 
             // update header & retry failed request
+            console.log("Retyring with new token");
             originalRequest.headers["Authorization"] = `Bearer ${data.token}`;
             return axios(originalRequest);
           } catch (refreshError) {
-            console.log("Refresh failed, redirect to login");
+            console.log("Refresh failed, redirect to login : ", refreshError);
             localStorage.removeItem("token");
             localStorage.removeItem("refreshToken");
             // window.location.href = "/login";
