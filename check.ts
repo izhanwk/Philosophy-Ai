@@ -1,3 +1,8 @@
-let str = "45657";
-let str2 = str.slice(-1);
-console.log(str2);
+const a = ["mango"];
+
+const fun = (arr: string[]) => {
+  arr.push("banana");
+};
+
+fun(a);
+console.log(a);

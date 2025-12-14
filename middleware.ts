@@ -1,15 +1,16 @@
 import { NextResponse, NextRequest } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { getToken } from "next-auth/jwt";
+import { readAccessToken } from "@/lib/authCookies";
 
 export async function middleware(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  const token = authHeader.slice(7).trim();
+  const bearer =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7).trim()
+      : null;
+  const tokenFromCookie = readAccessToken(req);
+  const token = bearer || tokenFromCookie;
 
   if (!token || token === "undefined" || token === "null") {
     console.log("err 1");

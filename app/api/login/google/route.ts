@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { google } from "googleapis";
 import { Prisma } from "@/lib/prisma";
+import { setAuthCookies } from "@/lib/authCookies";
 
 /**
  * Handles Google Identity credentials (ID tokens) and returns
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
       { expiresIn: "45d" }
     );
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         token: accessToken,
         refresh: refreshToken,
@@ -100,6 +101,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
+
+    setAuthCookies(response, accessToken, refreshToken);
+    return response;
   } catch (err) {
     console.error("Google login failed:", err);
     return NextResponse.json(

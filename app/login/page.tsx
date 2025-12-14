@@ -22,13 +22,7 @@ export default function LoginPage() {
   const router = useRouter();
   const onSubmit = async (data: object) => {
     try {
-      const response = await axios.post("/api/login", data);
-      const resData = response.data;
-      localStorage.setItem("token", resData.token);
-      localStorage.setItem("refreshToken", resData.refresh);
-      axios.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer ${resData.token}`;
+      await axios.post("/api/login", data);
       setAlertInfo(null);
       router.push("/dashboard");
     } catch (error: any) {

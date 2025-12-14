@@ -26,19 +26,13 @@ function Navbar() {
   }, [data]);
 
   useEffect(() => {
-    const check = async () => {
-      const token = localStorage.getItem("token");
+    axios.defaults.withCredentials = true;
+  }, []);
 
+  useEffect(() => {
+    const check = async () => {
       try {
-        const response = await axios.post(
-          "/api/checkToken",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await axios.post("/api/checkToken");
         const myData = response.data;
         setJwtCorrect(true);
         setisAuthed(true);
@@ -59,15 +53,7 @@ function Navbar() {
         router.push("/dashboard");
       }
     }
-  }, [status, jwtCorrect]);
-
-  useEffect(() => {
-    const storedToken =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (storedToken) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
-    }
-  }, []);
+  }, [status, jwtCorrect, path, router]);
 
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
@@ -81,29 +67,21 @@ function Navbar() {
           console.log("retrying");
           originalRequest._retry = true;
           console.log("before token");
-          const refreshToken = localStorage.getItem("refreshToken");
-          console.log("Here is refresh token : ", refreshToken);
 
           try {
-            const { data } = await axios.post("/api/refresh", {
-              refreshToken,
-            });
+            const { data } = await axios.post("/api/refresh");
 
             if (!data?.token) {
               throw new Error("No token in refresh response");
             }
             console.log("Got new token", data.token);
-            localStorage.setItem("token", data.token);
 
-            // update header & retry failed request
-            console.log("Retyring with new token");
-            originalRequest.headers["Authorization"] = `Bearer ${data.token}`;
+            // retry failed request with fresh cookie-based token
             return axios(originalRequest);
           } catch (refreshError) {
             console.log("Refresh failed, redirect to login : ", refreshError);
-            localStorage.removeItem("token");
-            localStorage.removeItem("refreshToken");
-            // window.location.href = "/login";
+            await axios.post("/api/logout").catch(() => {});
+            router.push("/login");
           }
         }
 
@@ -112,10 +90,10 @@ function Navbar() {
     );
 
     return () => axios.interceptors.response.eject(interceptor);
-  }, []);
+  }, [router]);
 
   useEffect(() => {
-    const publicRoutes = ["/login", "/signup", "/otp", "/forgot", "/reset"];
+    const publicRoutes = ["/", "/login", "/signup", "/otp", "/forgot", "/reset"];
     if (publicRoutes.includes(window.location.pathname)) return;
 
     console.log("status:", status, "jwt:", jwtCorrect);
@@ -179,9 +157,10 @@ function Navbar() {
                 <button
                   className="w-full cursor-pointer text-left px-4 py-2 text-sm hover:bg-white/10"
                   onClick={() => {
-                    signOut();
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("refreshToken");
+                    setisAuthed(false);
+                    setJwtCorrect(false);
+                    axios.post("/api/logout").catch(() => {});
+                    signOut({ callbackUrl: "/" });
                   }}
                 >
                   Logout

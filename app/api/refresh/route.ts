@@ -1,26 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import {
+  clearAuthCookies,
+  readRefreshToken,
+  setAuthCookies,
+} from "@/lib/authCookies";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const refreshToken = body.refreshToken;
-  let refresh = refreshToken;
-
-  // Fallback: accept body refreshToken if provided (legacy clients)
-  if (!refresh) {
-    try {
-      const body = await req.json();
-      refresh = body.refreshToken;
-    } catch {
-      // ignore body parse errors
-    }
-  }
+  const refreshFromCookie = readRefreshToken(req);
+  const refresh = refreshFromCookie;
 
   if (!refresh) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { message: "Refresh token missing" },
       { status: 400 }
     );
+    clearAuthCookies(res);
+    return res;
   }
 
   const refreshSecret = process.env.REFRESH_JWT_SECRET;
@@ -40,21 +36,27 @@ export async function POST(req: NextRequest) {
     const email = decoded.email;
 
     if (!id || !email) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { message: "Invalid refresh token" },
         { status: 401 }
       );
+      clearAuthCookies(res);
+      return res;
     }
 
     const newAccessToken = jwt.sign({ userId: id, email }, accessSecret, {
       expiresIn: "5m",
     });
 
-    return NextResponse.json({ token: newAccessToken }, { status: 200 });
+    const res = NextResponse.json({ token: newAccessToken }, { status: 200 });
+    setAuthCookies(res, newAccessToken, refresh);
+    return res;
   } catch (err) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { message: "Expired or invalid refresh token" },
       { status: 403 }
     );
+    clearAuthCookies(res);
+    return res;
   }
 }
