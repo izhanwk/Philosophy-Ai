@@ -93,7 +93,14 @@ function Navbar() {
   }, [router]);
 
   useEffect(() => {
-    const publicRoutes = ["/", "/login", "/signup", "/otp", "/forgot", "/reset"];
+    const publicRoutes = [
+      "/",
+      "/login",
+      "/signup",
+      "/otp",
+      "/forgot",
+      "/reset",
+    ];
     if (publicRoutes.includes(window.location.pathname)) return;
 
     console.log("status:", status, "jwt:", jwtCorrect);

@@ -20,9 +20,9 @@ export default function HomePage() {
   const router = useRouter();
   useEffect(() => {
     if (status === "authenticated") {
-      // router.push("/dashboard");
+      router.push("/dashboard");
     }
-  }, [status]);
+  }, [status, router]);
 
   return (
     <main className="min-h-screen bg-linear-to-br from-zinc-900 to-black text-white">
@@ -69,7 +69,7 @@ export default function HomePage() {
             <button
               className="flex cursor-pointer items-center px-6 py-2 text-xs sm:text-sm rounded-lg border border-white/20 hover:bg-white/10 transition-colors"
               onClick={() => {
-                signIn("google");
+                signIn("google", { callbackUrl: "/dashboard" });
               }}
             >
               <GoogleLogo />
