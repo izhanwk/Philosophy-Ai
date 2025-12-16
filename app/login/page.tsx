@@ -118,7 +118,9 @@ export default function LoginPage() {
 
                 <span
                   onClick={() => {
-                    router.push("/forgot");
+                    const guard = crypto.randomUUID();
+                    sessionStorage.setItem("OTPGuard", guard);
+                    router.push(`/forgot?guard=${guard}`);
                   }}
                   className="text-xs cursor-pointer sm:text-sm text-blue-400 hover:text-blue-300 transition-colors block text-right"
                 >

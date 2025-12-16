@@ -14,9 +14,6 @@ function Navbar() {
   const [isAuthed, setisAuthed] = useState<boolean>(false);
   const [email, setemail] = useState<string>("");
   const path = usePathname();
-  // const isAuthed = status === "authenticated";
-
-  // const email = data?.user?.email ?? "Signed in";
   const [jwtCorrect, setJwtCorrect] = useState(false);
 
   useEffect(() => {
@@ -47,16 +44,35 @@ function Navbar() {
   }, []); // runs once to verify token
 
   useEffect(() => {
-    const authed = status === "authenticated" || jwtCorrect === true;
-    if (!authed) return;
+    const authed = status === "authenticated" || jwtCorrect;
+    if (authed && !isAuthed) {
+      setisAuthed(true);
+    }
 
-    setisAuthed(true);
-
+    const publicRoutes = [
+      "/",
+      "/login",
+      "/signup",
+      "/signin",
+      "/otp",
+      "/forgot",
+      "/reset",
+    ];
     const authPages = ["/login", "/signup", "/signin"];
-    if (authPages.includes(path)) {
+    if (!path) return;
+
+    const onPublicRoute = publicRoutes.includes(path);
+    if (authed && authPages.includes(path)) {
+      router.push("/dashboard");
+      return;
+    }
+
+    if (!authed && !onPublicRoute) {
+      router.push("/");
+    } else if (authed && !onPublicRoute) {
       router.push("/dashboard");
     }
-  }, [status, jwtCorrect, path, router]);
+  }, [status, jwtCorrect, path, router, isAuthed]);
 
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(

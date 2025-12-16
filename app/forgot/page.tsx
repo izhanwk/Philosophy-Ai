@@ -1,18 +1,34 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Alert } from "../Components/Alert";
+import { useSearchParams } from "next/navigation";
 
 type ForgotForm = {
   email: string;
 };
 
 export default function ForgotPasswordPage() {
+  const searchParams = useSearchParams();
   const router = useRouter();
+  useEffect(() => {
+    const guardFromUrl = searchParams.get("guard");
+    const guardFromSession =
+      typeof window !== "undefined" ? sessionStorage.getItem("OTPGuard") : null;
+
+    if (
+      !guardFromUrl ||
+      !guardFromSession ||
+      guardFromUrl !== guardFromSession
+    ) {
+      router.push("/login");
+      return;
+    }
+  }, [router, searchParams]);
   const [alertInfo, setAlertInfo] = useState<{
     message: string;
     variant?: "success" | "error" | "warning" | "info";
