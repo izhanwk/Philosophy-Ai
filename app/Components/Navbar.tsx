@@ -47,11 +47,14 @@ function Navbar() {
   }, []); // runs once to verify token
 
   useEffect(() => {
-    if (status === "authenticated" || jwtCorrect === true) {
-      setisAuthed(true);
-      if (path === "/login" || path === "signin") {
-        router.push("/dashboard");
-      }
+    const authed = status === "authenticated" || jwtCorrect === true;
+    if (!authed) return;
+
+    setisAuthed(true);
+
+    const authPages = ["/login", "/signup", "/signin"];
+    if (authPages.includes(path)) {
+      router.push("/dashboard");
     }
   }, [status, jwtCorrect, path, router]);
 
