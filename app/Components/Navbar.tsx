@@ -148,9 +148,9 @@ function Navbar() {
   return (
     <div>
       {/* NAV */}
-      <nav className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
         <h1
-          className="text-lg sm:text-xl md:text-2xl font-bold tracking-wide text-center sm:text-left cursor-pointer"
+          className="text-lg sm:text-xl md:text-2xl font-bold tracking-wide text-center sm:text-left cursor-pointer select-none"
           onClick={() => {
             router.push("/");
           }}
@@ -159,10 +159,10 @@ function Navbar() {
         </h1>
 
         {isAuthed ? (
-          <div className="relative" ref={menuRef}>
+          <div className="relative w-full sm:w-auto" ref={menuRef}>
             <button
               onClick={() => setOpen((v) => !v)}
-              className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 transition"
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 transition sm:w-auto"
             >
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
                 <User className="h-5 w-5" />
@@ -195,9 +195,9 @@ function Navbar() {
             )}
           </div>
         ) : (
-          <div className="flex gap-3 sm:gap-4">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
             <button
-              className="cursor-pointer px-4 sm:px-6 py-2 text-xs sm:text-sm rounded-lg border border-white/20 hover:bg-white/10 transition-colors"
+              className="w-full cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-sm hover:bg-white/10 transition-colors sm:w-auto sm:px-5"
               onClick={() => {
                 router.push("/login");
               }}
@@ -205,7 +205,7 @@ function Navbar() {
               Login
             </button>
             <button
-              className="cursor-pointer px-4 sm:px-6 py-2 text-xs sm:text-sm rounded-lg bg-white text-black font-semibold hover:bg-gray-200 transition-colors"
+              className="w-full cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-gray-200 transition-colors sm:w-auto sm:px-5"
               onClick={() => {
                 router.push("/signup");
               }}
