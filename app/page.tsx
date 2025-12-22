@@ -7,6 +7,7 @@ import Footer from "./Components/Footer";
 import GoogleLogo from "./Components/Google";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Sparkles, BookOpen, MessageCircle } from "lucide-react";
 
 const handleScroll = (id: string): void => {
   const element = document.getElementById(id) as HTMLElement | null;
@@ -16,23 +17,97 @@ const handleScroll = (id: string): void => {
 };
 
 export default function HomePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
+
   useEffect(() => {
     if (status === "authenticated") {
       router.push("/dashboard");
     }
   }, [status, router]);
 
+  const features = [
+    {
+      icon: <MessageCircle className="h-6 w-6 text-sky-200" />,
+      title: "Deep Conversations",
+      desc: "Meaningful dialogues with AI philosophers.",
+    },
+    {
+      icon: <BookOpen className="h-6 w-6 text-amber-200" />,
+      title: "Historical Accuracy",
+      desc: "Grounded in authentic writings and ideas.",
+    },
+    {
+      icon: <Sparkles className="h-6 w-6 text-emerald-200" />,
+      title: "Interactive Learning",
+      desc: "Ask questions and explore perspectives.",
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-linear-to-br from-zinc-900 to-black text-white">
       <Navbar />
+
       {/* HERO */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <section className="w-full max-w-6xl text-center flex flex-col items-center">
-          {/* PROFILE IMAGE */}
-          <div className="mb-6 sm:mb-8">
-            <div className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48">
+      <div className="flex-1 px-4 py-8 sm:px-6 sm:py-12 lg:px-10">
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
+              <Sparkles className="h-4 w-4" />
+              Experience living philosophy
+            </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+              Explore the minds of history&apos;s greatest thinkers.
+            </h1>
+            <p className="text-sm sm:text-base text-white/70 leading-relaxed max-w-2xl">
+              Engage in deep conversations with AI recreations of Avicenna, Ibn
+              Rushd, Imam Ghazali, and more. Learn, debate, and discover new
+              perspectives in minutes.
+            </p>
+
+            {/* CTA BUTTONS */}
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <button
+                className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-black shadow-md transition hover:bg-gray-200"
+                onClick={() => {
+                  signIn("google", { callbackUrl: "/dashboard" });
+                }}
+              >
+                <GoogleLogo />
+                Continue with Google
+              </button>
+              <button
+                className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/20 px-5 py-3 text-sm text-white transition hover:bg-white/10"
+                onClick={() => {
+                  handleScroll("aboutus");
+                }}
+              >
+                Learn more
+              </button>
+            </div>
+
+            <div className="grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
+              {features.map((item, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left shadow-sm backdrop-blur transition hover:bg-white/10"
+                >
+                  <div className="flex items-center gap-2">
+                    {item.icon}
+                    <h3 className="text-sm sm:text-base font-semibold">
+                      {item.title}
+                    </h3>
+                  </div>
+                  <p className="mt-2 text-xs sm:text-sm text-white/60">
+                    {item.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative mx-auto flex max-w-sm flex-col items-center">
+            <div className="relative h-40 w-40 sm:h-52 sm:w-52 lg:h-56 lg:w-56 overflow-hidden rounded-full border border-white/15 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.45)] bg-white/5 backdrop-blur">
               <Image
                 src="/Alghazali.png"
                 alt="Al-Ghazali"
@@ -42,98 +117,73 @@ export default function HomePage() {
               />
             </div>
           </div>
-
-          {/* TEXT */}
-          <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-            Explore the Minds of{" "}
-            <span className="block sm:inline">
-              History's Greatest Philosophers
-            </span>
-          </h1>
-
-          <p className="mt-3 sm:mt-4 text-xs sm:text-sm md:text-base text-white/70 leading-relaxed max-w-xl sm:max-w-2xl">
-            Engage in deep conversations with AI-powered recreations of thinkers
-            like Avicenna, Ibn Rushd, Imam Ghazali and many more.
-          </p>
-
-          {/* CTA BUTTONS */}
-          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 w-full max-w-sm">
-            <a
-              className="px-6 flex items-center cursor-pointer py-2 text-xs sm:text-sm rounded-lg bg-white text-black font-semibold hover:bg-gray-200 transition-colors shadow-md"
-              onClick={() => {
-                handleScroll("aboutus");
-              }}
-            >
-              About us
-            </a>
-            <button
-              className="flex cursor-pointer items-center px-6 py-2 text-xs sm:text-sm rounded-lg border border-white/20 hover:bg-white/10 transition-colors"
-              onClick={() => {
-                signIn("google", { callbackUrl: "/dashboard" });
-              }}
-            >
-              <GoogleLogo />
-              <p className="px-2">Continue with Google</p>
-            </button>
-          </div>
-
-          {/* FEATURES GRID */}
-          <div className="mt-10 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-4xl">
-            {[
-              {
-                icon: "🧠",
-                title: "Deep Conversations",
-                desc: "Meaningful dialogues with AI philosophers",
-              },
-              {
-                icon: "📚",
-                title: "Historical Accuracy",
-                desc: "Based on authentic writings and ideas",
-              },
-              {
-                icon: "💭",
-                title: "Interactive Learning",
-                desc: "Ask questions and explore perspectives",
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
-              >
-                <div className="text-xl mb-2">{item.icon}</div>
-                <h3 className="text-base sm:text-lg font-semibold mb-1">
-                  {item.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-white/60">{item.desc}</p>
-              </div>
-            ))}
-          </div>
         </section>
 
         {/* ABOUT US */}
         <section
           id="aboutus"
-          className="mt-24 w-full max-w-6xl px-2 sm:px-4 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10"
+          className="relative mx-auto mt-20 w-full max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 via-white/0 to-white/5 px-5 py-10 shadow-lg backdrop-blur sm:px-8 sm:py-12"
         >
-          {/* IMAGE PLACEHOLDER */}
-          <div className="relative max-md:hidden sm:w-52 sm:h-52 md:w-64 md:h-64 shrink-0 rounded-xl">
-            <Image
-              src="/Aristotle.png"
-              alt="Aristotle"
-              width={400}
-              height={400}
-              className="object-cover"
-            />
+          <div className="pointer-events-none absolute inset-0 opacity-60">
+            <div className="absolute -left-16 top-6 h-40 w-40 rounded-full bg-emerald-500/15 blur-3xl" />
+            <div className="absolute -right-10 bottom-0 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
           </div>
 
-          <div className="text-center md:text-left max-w-xl">
-            <p className="font-semibold text-white text-lg mb-2">About Us</p>
-            <p className="text-xs sm:text-sm md:text-base text-white/70 leading-relaxed">
-              We are dedicated to preserving and presenting the wisdom of
-              ancient philosophers in a way that feels accessible, interactive,
-              and engaging for modern learners. Our goal is to bridge centuries
-              of thought and bring timeless ideas into today’s conversations.
-            </p>
+          <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-5 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/70">
+                About Us
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight">
+                Bringing timeless ideas into today&apos;s conversations.
+              </h2>
+              <p className="text-sm sm:text-base text-white/70 leading-relaxed max-w-2xl mx-auto md:mx-0">
+                We preserve and present the wisdom of ancient philosophers in a
+                way that feels accessible, interactive, and engaging for modern
+                learners. Our goal is to bridge centuries of thought and make it
+                easy to explore, question, and learn.
+              </p>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {[
+                  {
+                    icon: <BookOpen className="h-5 w-5 text-amber-200" />,
+                    title: "Curated sources",
+                    desc: "Primary texts distilled with historical context.",
+                  },
+
+                  {
+                    icon: <Sparkles className="h-5 w-5 text-emerald-200" />,
+                    title: "Human-tuned",
+                    desc: "Content crafted with scholars and educators.",
+                  },
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left shadow-sm backdrop-blur"
+                  >
+                    <div className="mt-0.5">{item.icon}</div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-semibold">{item.title}</h3>
+                      <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative mx-auto flex items-center justify-center">
+              <div className="relative h-52 w-52 sm:h-60 sm:w-60 md:h-64 md:w-64 overflow-hidden rounded-2xl border border-white/15 bg-white/5 shadow-[0_15px_50px_-20px_rgba(0,0,0,0.5)] backdrop-blur">
+                <Image
+                  src="/Aristotle.png"
+                  alt="Aristotle"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </div>
           </div>
         </section>
       </div>
