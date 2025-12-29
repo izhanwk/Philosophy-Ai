@@ -43,3 +43,10 @@ model otptries {
   created_at       DateTime @db.DateTime(0)
   password_purpose Boolean  @default(false)
 }
+
+model philosophers {
+  id          Int    @id @default(autoincrement())
+  name        String @unique @db.VarChar(120)
+  image_url   String @db.VarChar(500)
+  description String @db.Text
+}
