@@ -69,8 +69,6 @@ function Navbar() {
 
     if (!authed && !onPublicRoute) {
       router.push("/");
-    } else if (authed && !onPublicRoute) {
-      router.push("/dashboard");
     }
   }, [status, jwtCorrect, path, router, isAuthed]);
 
@@ -120,13 +118,12 @@ function Navbar() {
       "/forgot",
       "/reset",
     ];
-    if (publicRoutes.includes(window.location.pathname)) return;
+    const currentPath = window.location.pathname;
+    if (publicRoutes.includes(currentPath)) return;
 
     console.log("status:", status, "jwt:", jwtCorrect);
 
-    if (status === "authenticated" || jwtCorrect) {
-      router.push("/dashboard");
-    } else if (status === "unauthenticated" && !jwtCorrect) {
+    if (status === "unauthenticated" && !jwtCorrect) {
       router.push("/");
     }
   }, [status, jwtCorrect, router]);
