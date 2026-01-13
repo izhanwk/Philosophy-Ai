@@ -15,6 +15,7 @@ function Navbar() {
   const [email, setemail] = useState<string>("");
   const path = usePathname();
   const [jwtCorrect, setJwtCorrect] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   useEffect(() => {
     if (typeof data?.user?.email === "string") {
@@ -37,6 +38,9 @@ function Navbar() {
       } catch (err) {
         console.log("error response");
         setJwtCorrect(false);
+        setisAuthed(false);
+      } finally {
+        setAuthCheckComplete(true);
       }
     };
 
@@ -44,6 +48,9 @@ function Navbar() {
   }, []); // runs once to verify token
 
   useEffect(() => {
+    if (status === "loading" || !authCheckComplete) {
+      return;
+    }
     const authed = status === "authenticated" || jwtCorrect;
     if (authed && !isAuthed) {
       setisAuthed(true);
@@ -70,7 +77,7 @@ function Navbar() {
     if (!authed && !onPublicRoute) {
       router.push("/");
     }
-  }, [status, jwtCorrect, path, router, isAuthed]);
+  }, [status, jwtCorrect, path, router, isAuthed, authCheckComplete]);
 
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
@@ -108,25 +115,6 @@ function Navbar() {
 
     return () => axios.interceptors.response.eject(interceptor);
   }, [router]);
-
-  useEffect(() => {
-    const publicRoutes = [
-      "/",
-      "/login",
-      "/signup",
-      "/otp",
-      "/forgot",
-      "/reset",
-    ];
-    const currentPath = window.location.pathname;
-    if (publicRoutes.includes(currentPath)) return;
-
-    console.log("status:", status, "jwt:", jwtCorrect);
-
-    if (status === "unauthenticated" && !jwtCorrect) {
-      router.push("/");
-    }
-  }, [status, jwtCorrect, router]);
 
   // Close dropdown on outside click
   useEffect(() => {
