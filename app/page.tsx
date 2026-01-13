@@ -122,7 +122,7 @@ export default function HomePage() {
         {/* ABOUT US */}
         <section
           id="aboutus"
-          className="relative mx-auto mt-20 w-full max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 via-white/0 to-white/5 px-5 py-10 shadow-lg backdrop-blur sm:px-8 sm:py-12"
+          className="relative mx-auto mt-20 w-full max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-white/5 via-white/0 to-white/5 px-5 py-10 shadow-lg backdrop-blur sm:px-8 sm:py-12"
         >
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div className="absolute -left-16 top-6 h-40 w-40 rounded-full bg-emerald-500/15 blur-3xl" />
