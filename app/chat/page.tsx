@@ -1,34 +1,74 @@
-﻿import React from "react";
+﻿"use client";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
-import { Prisma } from "@/lib/prisma";
 
-type ChatPageProps = {
-  searchParams?: Promise<{
-    philosopherId?: string;
-  }>;
+type Philosopher = {
+  id: string | number;
+  name: string;
+  image_url: string;
+  description: string;
 };
 
-async function ChatPage({ searchParams }: ChatPageProps) {
-  const resolvedSearchParams = await Promise.resolve(searchParams);
-  const philosophers = await Prisma.philosophers.findMany({
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      image_url: true,
-      description: true,
-    },
-  });
+type Message = {
+  id: number;
+  sender: "user" | string | number;
+  text: string;
+  time: string;
+};
 
-  const activePhilosopher =
-    philosophers.find(
-      (philosopher) =>
-        String(philosopher.id) === resolvedSearchParams?.philosopherId
-    ) || philosophers[0];
+function ChatPage() {
+  const [philosophers, setPhilosophers] = useState<Philosopher[]>([]);
+  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const philosopherId = searchParams?.get("philosopherId");
+  const [Messages, setMessages] = useState<string[]>([]);
 
-  const messages = activePhilosopher
+  useEffect(() => {
+    let isActive = true;
+
+    const loadPhilosophers = async () => {
+      try {
+        const response = await fetch("/api/philosophers", {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          throw new Error("Failed to load philosophers");
+        }
+        const data = await response.json();
+        if (isActive) {
+          setPhilosophers(data.philosophers ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to load philosophers", error);
+        if (isActive) {
+          setPhilosophers([]);
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPhilosophers();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const activePhilosopher = useMemo(() => {
+    return (
+      philosophers.find(
+        (philosopher) => String(philosopher.id) === philosopherId
+      ) || philosophers[0]
+    );
+  }, [philosophers, philosopherId]);
+
+  const messages: Message[] = activePhilosopher
     ? [
         {
           id: 1,
@@ -82,7 +122,11 @@ async function ChatPage({ searchParams }: ChatPageProps) {
             </p>
           </header>
 
-          {philosophers.length === 0 ? (
+          {loading && philosophers.length === 0 ? (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-300">
+              Loading philosophers...
+            </div>
+          ) : philosophers.length === 0 ? (
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-300">
               No philosophers found yet.
             </div>
@@ -201,6 +245,9 @@ async function ChatPage({ searchParams }: ChatPageProps) {
                     <div className="flex flex-1 items-center gap-3">
                       <span className="text-xs text-zinc-400">
                         Write a message...
+                      </span>
+                      <span className="text-[11px] uppercase tracking-[0.25em] text-amber-200/70">
+                        {activePhilosopher?.name ?? "Philosopher"} only
                       </span>
                     </div>
                     <button
