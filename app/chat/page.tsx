@@ -1,9 +1,11 @@
 ﻿"use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
+import axios from "axios";
+import { User } from "lucide-react";
 
 type Philosopher = {
   id: string | number;
@@ -24,22 +26,24 @@ function ChatPage() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const philosopherId = searchParams?.get("philosopherId");
-  const [Messages, setMessages] = useState<string[]>([]);
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [draft, setDraft] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let isActive = true;
 
     const loadPhilosophers = async () => {
       try {
-        const response = await fetch("/api/philosophers", {
-          cache: "no-store",
+        const response = await axios.get("/api/philosophers", {
+          headers: {
+            "Cache-Control": "no-store",
+          },
         });
-        if (!response.ok) {
-          throw new Error("Failed to load philosophers");
-        }
-        const data = await response.json();
+
         if (isActive) {
-          setPhilosophers(data.philosophers ?? []);
+          setPhilosophers(response.data.philosophers ?? []);
         }
       } catch (error) {
         console.error("Failed to load philosophers", error);
@@ -60,6 +64,14 @@ function ChatPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+  }, [chatMessages]);
+
   const activePhilosopher = useMemo(() => {
     return (
       philosophers.find(
@@ -68,40 +80,82 @@ function ChatPage() {
     );
   }, [philosophers, philosopherId]);
 
-  const messages: Message[] = activePhilosopher
-    ? [
-        {
-          id: 1,
-          sender: "user",
-          text: "I have been thinking about what makes a good life. Where should I begin?",
-          time: "08:31",
+  const formatTime = (date: Date) => {
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const handleSend = async () => {
+    const message = draft.trim();
+    if (!message || !activePhilosopher || isStreaming) {
+      return;
+    }
+
+    setDraft("");
+    const now = new Date();
+    const userMessage: Message = {
+      id: Date.now(),
+      sender: "user",
+      text: message,
+      time: formatTime(now),
+    };
+    const assistantMessageId = userMessage.id + 1;
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      sender: activePhilosopher.id,
+      text: "",
+      time: formatTime(now),
+    };
+    setChatMessages((prev) => [...prev, userMessage, assistantMessage]);
+    setIsStreaming(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          id: 2,
-          sender: activePhilosopher.id,
-          text: "Begin with habits. A good life is built from repeated actions that align with reason and virtue.",
-          time: "08:32",
-        },
-        {
-          id: 3,
-          sender: "user",
-          text: "So virtue comes first, not happiness?",
-          time: "08:33",
-        },
-        {
-          id: 4,
-          sender: activePhilosopher.id,
-          text: "Happiness is the harmony of the soul. Knowledge and character refine it together.",
-          time: "08:34",
-        },
-        {
-          id: 5,
-          sender: activePhilosopher.id,
-          text: "Be cautious. Certainty is earned through doubt, reflection, and spiritual practice.",
-          time: "08:35",
-        },
-      ]
-    : [];
+        body: JSON.stringify({ message }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error("Failed to stream response");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+
+        if (value) {
+          const chunk = decoder.decode(value, { stream: !done });
+          setChatMessages((prev) =>
+            prev.map((entry) =>
+              entry.id === assistantMessageId
+                ? { ...entry, text: entry.text + chunk }
+                : entry
+            )
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Failed to stream chat response", error);
+      setChatMessages((prev) =>
+        prev.map((entry) =>
+          entry.id === assistantMessageId
+            ? {
+                ...entry,
+                text: "Sorry, something went wrong while streaming the reply.",
+              }
+            : entry
+        )
+      );
+    } finally {
+      setIsStreaming(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-linear-to-br from-zinc-900 to-black text-white flex flex-col">
@@ -173,7 +227,7 @@ function ChatPage() {
                 </div>
               </aside>
 
-              <div className="flex flex-col rounded-3xl border border-white/10 bg-black/40 backdrop-blur">
+              <div className="flex flex-col rounded-3xl border border-white/10 bg-black/40 backdrop-blur h-[80vh]">
                 <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                   <div className="flex items-center gap-3">
                     <img
@@ -194,8 +248,11 @@ function ChatPage() {
                   </div>
                 </div>
 
-                <div className="flex-1 space-y-5 px-6 py-6">
-                  {messages.map((message) => {
+                <div
+                  ref={messagesContainerRef}
+                  className="flex-1 min-h-0 space-y-5 px-6 py-6 overflow-y-auto "
+                >
+                  {chatMessages.map((message) => {
                     const isUser = message.sender === "user";
                     const philosopher = philosophers.find(
                       (entry) => String(entry.id) === String(message.sender)
@@ -203,7 +260,7 @@ function ChatPage() {
                     return (
                       <div
                         key={message.id}
-                        className={`flex items-end gap-3 ${
+                        className={`flex items-end gap-3  ${
                           isUser ? "justify-end" : "justify-start"
                         }`}
                       >
@@ -232,7 +289,7 @@ function ChatPage() {
                         </div>
                         {isUser ? (
                           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-xs font-semibold text-white">
-                            You
+                            <User />
                           </div>
                         ) : null}
                       </div>
@@ -243,15 +300,23 @@ function ChatPage() {
                 <div className="border-t border-white/10 px-6 py-4">
                   <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:flex-row sm:items-center">
                     <div className="flex flex-1 items-center gap-3">
-                      <span className="text-xs text-zinc-400">
-                        Write a message...
-                      </span>
-                      <span className="text-[11px] uppercase tracking-[0.25em] text-amber-200/70">
-                        {activePhilosopher?.name ?? "Philosopher"} only
-                      </span>
+                      <input
+                        value={draft}
+                        onChange={(event) => setDraft(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            handleSend();
+                          }
+                        }}
+                        placeholder="Write a message..."
+                        className="w-full bg-transparent text-sm text-white outline-none placeholder:text-zinc-400"
+                      />
                     </div>
                     <button
                       aria-label="Send message"
+                      onClick={handleSend}
+                      disabled={!draft.trim() || isStreaming}
                       className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-amber-100 transition hover:border-amber-200/40 hover:bg-white/10"
                     >
                       <svg
