@@ -5,7 +5,7 @@
   scrollbar-color: rgba(251, 191, 36, 0.6) rgba(255, 255, 255, 0.06);
 }
 
-.chat-scrollbar::-webkit-scrollbar {
+/* .chat-scrollbar::-webkit-scrollbar {
   width: 10px;
 }
 
@@ -24,7 +24,7 @@
     rgba(253, 224, 71, 0.95),
     rgba(251, 191, 36, 0.8)
   );
-}
+} */
 
 .glow-effect {
   box-shadow: 0 0 12px rgba(251, 191, 36, 0.9), 0 0 24px rgba(251, 191, 36, 0.6);

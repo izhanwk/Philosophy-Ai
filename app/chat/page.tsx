@@ -34,13 +34,16 @@ function ChatPage() {
   const [glow, setGlow] = useState<Boolean>(false);
 
   const delay = async () => {
+    console.log("function");
     await new Promise((res) => setTimeout(res, 2000));
     inputRef?.current?.scrollIntoView({
       behavior: "smooth",
       block: "end",
     });
+    setGlow(true);
+    await new Promise((res) => setTimeout(res, 1000));
+    setGlow(false);
   };
-  delay();
   useEffect(() => {
     delay();
     let isActive = true;
@@ -131,6 +134,7 @@ function ChatPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ message }),
+        credentials: "include",
       });
 
       if (!response.ok || !response.body) {
@@ -316,7 +320,11 @@ function ChatPage() {
                   ref={inputRef}
                   className="border-t border-white/10 px-6 py-4"
                 >
-                  <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:flex-row sm:items-center">
+                  <div
+                    className={`flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:flex-row sm:items-center transition-all duration-150 ${
+                      glow ? "glow-effect" : ""
+                    }`}
+                  >
                     <div className="flex flex-1 items-center gap-3">
                       <input
                         value={draft}
