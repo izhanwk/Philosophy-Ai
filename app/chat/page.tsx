@@ -250,7 +250,7 @@ function ChatPage() {
 
                 <div
                   ref={messagesContainerRef}
-                  className="flex-1 min-h-0 space-y-5 px-6 py-6 overflow-y-auto "
+                  className="chat-scrollbar flex-1 min-h-0 space-y-5 px-6 py-6 overflow-y-auto "
                 >
                   {chatMessages.map((message) => {
                     const isUser = message.sender === "user";

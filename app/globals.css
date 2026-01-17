@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 191, 36, 0.6) rgba(255, 255, 255, 0.06);
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  border-radius: 999px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  cursor: pointer;
+  background: linear-gradient(
+    180deg,
+    rgba(253, 224, 71, 0.95),
+    rgba(251, 191, 36, 0.8)
+  );
+}
+
 /* :root {
   --background: #ffffff;
   --foreground: #171717;
