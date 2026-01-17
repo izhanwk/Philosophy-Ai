@@ -30,8 +30,19 @@ function ChatPage() {
   const [draft, setDraft] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLDivElement>(null);
+  const [glow, setGlow] = useState<Boolean>(false);
 
+  const delay = async () => {
+    await new Promise((res) => setTimeout(res, 2000));
+    inputRef?.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  };
+  delay();
   useEffect(() => {
+    delay();
     let isActive = true;
 
     const loadPhilosophers = async () => {
@@ -79,6 +90,10 @@ function ChatPage() {
       ) || philosophers[0]
     );
   }, [philosophers, philosopherId]);
+
+  useEffect(() => {
+    delay();
+  }, [activePhilosopher]);
 
   const formatTime = (date: Date) => {
     const pad = (value: number) => String(value).padStart(2, "0");
@@ -297,7 +312,10 @@ function ChatPage() {
                   })}
                 </div>
 
-                <div className="border-t border-white/10 px-6 py-4">
+                <div
+                  ref={inputRef}
+                  className="border-t border-white/10 px-6 py-4"
+                >
                   <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:flex-row sm:items-center">
                     <div className="flex flex-1 items-center gap-3">
                       <input
