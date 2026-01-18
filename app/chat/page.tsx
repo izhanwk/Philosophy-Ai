@@ -356,7 +356,16 @@ function ChatPage() {
                               : "bg-white/10 text-zinc-100"
                           }`}
                         >
-                          <p>{message.text}</p>
+                          {message.text ? (
+                            <p>{message.text}</p>
+                          ) : isStreaming ? (
+                            <div className="flex items-center gap-2">
+                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300/60 border-t-transparent" />
+                              <span className="text-xs text-amber-200/70">
+                                Thinking
+                              </span>
+                            </div>
+                          ) : null}
                           <span
                             className={`mt-2 block text-xs ${
                               isUser ? "text-zinc-700" : "text-zinc-400"
