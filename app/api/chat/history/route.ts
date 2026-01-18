@@ -47,6 +47,13 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  console.log("chat history:", chat);
+  if (chat?.messages?.length) {
+    const assistantMessages = chat.messages.filter(
+      (message) => message.role === "assistant"
+    );
+    console.log("assistant responses:", assistantMessages);
+  } else {
+    console.log("assistant responses: none");
+  }
   return NextResponse.json({ chat }, { status: 200 });
 }

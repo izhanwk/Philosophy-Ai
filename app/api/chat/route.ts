@@ -2,23 +2,35 @@ import { readAccessToken } from "@/lib/authCookies";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { NextRequest } from "next/server";
 import { Prisma } from "@/lib/prisma";
+import { GoogleGenAI } from "@google/genai";
+
+export const runtime = "nodejs";
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+
+const wrapSystem = (
+  philosopherName: string,
+  stylePrompt: string,
+  userName: string
+) => {
+  return `
+You are ${philosopherName}. You speak in first person as the philosopher himself.
+
+Stay fully in character.
+Do not mention being an AI, roleplay, or simulation.
+
+Always address the person as "${userName}" when replying.
+
+Keep replies short, casual, and human.
+No long explanations. No formal tone.
+
+If modern topics are asked, interpret them through your philosophy.
+
+${stylePrompt}
+`.trim();
+};
 
 export async function POST(req: NextRequest) {
-  // const token = readAccessToken(req);
-  // const secret = process.env.JWT_SECRET;
-
   let userIdStr = req.headers.get("x-user-id");
-
-  // if (!userIdStr && token && secret) {
-  //   try {
-  //     const payload = jwt.verify(token, secret) as JwtPayload;
-  //     if (payload?.userId !== undefined && payload?.userId !== null) {
-  //       userIdStr = String(payload.userId);
-  //     }
-  //   } catch {
-  //     userIdStr = null;
-  //   }
-  // }
 
   if (!userIdStr) {
     return new Response("Unauthorized", { status: 401 });
@@ -26,6 +38,26 @@ export async function POST(req: NextRequest) {
 
   const userId = Number(userIdStr);
   const { message, philosopherId } = await req.json();
+
+  let philosopher = await Prisma.philosophers.findFirst({
+    where: {
+      id: Number(philosopherId),
+    },
+    select: { name: true, style_prompt: true },
+  });
+
+  const user = await Prisma.users.findFirst({
+    where: { idusers: userId },
+    select: { name: true },
+  });
+
+  const userName = user?.name?.split(" ")[0] ?? "friend";
+
+  const systemInstruction = wrapSystem(
+    String(philosopher?.name),
+    String(philosopher?.style_prompt),
+    String(userName)
+  );
 
   // 1) Find chat
   let chat = await Prisma.chats.findFirst({
@@ -62,22 +94,34 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
-      const prefix = `You said: ${message}\n\nAI: `;
-      controller.enqueue(encoder.encode(prefix));
 
-      const tokens = ["This ", "is ", "a ", "streamed ", "response ", "?."];
-      let assistantText = `You said: ${message}\n\nAI: `;
+      const result = await ai.models.generateContentStream({
+        model: "gemini-2.5-flash-lite-preview-09-2025",
+        contents: [{ role: "user", parts: [{ text: message }] }],
+        config: {
+          systemInstruction,
+          temperature: 0.9,
+        },
+      });
 
-      for (const t of tokens) {
-        await new Promise((r) => setTimeout(r, 150));
-        assistantText += t;
-        controller.enqueue(encoder.encode(t));
+      let assistantBody = "";
+      for await (const chunk of result) {
+        const text =
+          typeof (chunk as any).text === "function"
+            ? (chunk as any).text()
+            : (chunk as any).text;
+
+        if (text) {
+          assistantBody += text;
+          controller.enqueue(encoder.encode(text));
+        }
       }
+
       await Prisma.chatmessages.create({
         data: {
           chat_id: chat.id,
           role: "assistant",
-          content: assistantText,
+          content: assistantBody,
         },
         select: { id: true },
       });
