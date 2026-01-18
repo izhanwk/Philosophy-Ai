@@ -32,6 +32,7 @@ function ChatPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const [glow, setGlow] = useState<Boolean>(false);
+  const input = useRef<HTMLInputElement>(null);
 
   const formatTime = (date: Date) => {
     const pad = (value: number) => String(value).padStart(2, "0");
@@ -93,12 +94,12 @@ function ChatPage() {
 
   const delay = async () => {
     getChat();
-    await new Promise((res) => setTimeout(res, 2000));
+    await new Promise((res) => setTimeout(res, 500));
     inputRef?.current?.scrollIntoView({
       behavior: "smooth",
       block: "end",
     });
-    inputRef.current?.focus();
+    input.current?.focus({ preventScroll: true });
 
     setGlow(true);
     await new Promise((res) => setTimeout(res, 1000));
@@ -385,6 +386,7 @@ function ChatPage() {
                   >
                     <div className="flex flex-1 items-center gap-3">
                       <input
+                        ref={input}
                         value={draft}
                         onChange={(event) => setDraft(event.target.value)}
                         onKeyDown={(event) => {
