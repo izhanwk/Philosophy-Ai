@@ -172,10 +172,10 @@ export default function LoginPage() {
 
             {/* Social buttons */}
             <div className="flex justify-center">
-              <button
-                onClick={() => {
-                  signIn("google", { callbackUrl: "/dashboard" });
-                }}
+                <button
+                  onClick={() => {
+                    signIn("google", { callbackUrl: "/api/auth/bridge" });
+                  }}
                 type="button"
                 className="py-3 sm:py-4 w-full cursor-pointer px-4 rounded-xl sm:rounded-2xl bg-zinc-900/60 hover:bg-zinc-800 border border-zinc-700/40 transition-all flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-base font-medium"
               >

@@ -9,20 +9,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
-      // Load Prisma only inside the callback so middleware (Edge) stays Node-free.
+    async signIn({ user, account }) {
+      if (!user.email) {
+        return false;
+      }
+
       const { Prisma } = await import("./lib/prisma");
 
+      const googleId = account?.providerAccountId ?? null;
       const existingUser = await Prisma.users.findUnique({
-        where: { email: user.email! },
+        where: { email: user.email },
       });
-      if (!existingUser) {
-        await Prisma.users.create({
+
+      let dbUser = existingUser;
+      if (!dbUser) {
+        dbUser = await Prisma.users.create({
           data: {
-            email: user.email!,
+            email: user.email,
             createdAt: new Date(),
             name: user.name,
+            google_id: googleId,
           },
+        });
+      } else if (googleId && !dbUser.google_id) {
+        dbUser = await Prisma.users.update({
+          where: { email: user.email },
+          data: { google_id: googleId },
         });
       }
 

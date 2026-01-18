@@ -1,6 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { getToken } from "next-auth/jwt";
 import { readAccessToken } from "@/lib/authCookies";
 
 export async function middleware(req: NextRequest) {
@@ -10,18 +9,19 @@ export async function middleware(req: NextRequest) {
   const jwtSecret = process.env.JWT_SECRET;
   if (token && token !== "undefined" && token !== "null" && jwtSecret) {
     try {
-      jwt.verify(token, jwtSecret) as JwtPayload;
-      return NextResponse.next();
+      const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+      const requestHeaders = new Headers(req.headers);
+      if (decoded?.userId !== undefined && decoded?.userId !== null) {
+        requestHeaders.set("x-user-id", String(decoded.userId));
+      }
+      if (decoded?.email) {
+        requestHeaders.set("x-user-email", String(decoded.email));
+      }
+      return NextResponse.next({
+        request: { headers: requestHeaders },
+      });
     } catch {
-      // fall through to next-auth session check
-    }
-  }
-
-  const nextAuthSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
-  if (nextAuthSecret) {
-    const session = await getToken({ req, secret: nextAuthSecret });
-    if (session) {
-      return NextResponse.next();
+      // fall through to denied response
     }
   }
 
@@ -29,6 +29,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/token"],
+  matcher: ["/api/token", "/api/chat", "/api/chat/history"],
   runtime: "nodejs",
 };

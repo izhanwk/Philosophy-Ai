@@ -70,7 +70,7 @@ export default function HomePage() {
               <button
                 className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-black shadow-md transition hover:bg-gray-200"
                 onClick={() => {
-                  signIn("google", { callbackUrl: "/dashboard" });
+                  signIn("google", { callbackUrl: "/api/auth/bridge" });
                 }}
               >
                 <GoogleLogo />

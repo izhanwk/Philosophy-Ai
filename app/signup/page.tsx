@@ -237,7 +237,7 @@ export default function RegisterPage() {
             <div className="flex justify-center">
               <button
                 onClick={() => {
-                  signIn("google");
+                  signIn("google", { callbackUrl: "/api/auth/bridge" });
                   // connectGoogle();
                 }}
                 type="button"

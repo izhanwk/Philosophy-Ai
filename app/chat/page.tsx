@@ -25,7 +25,7 @@ function ChatPage() {
   const [philosophers, setPhilosophers] = useState<Philosopher[]>([]);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
-  const philosopherId = searchParams?.get("philosopherId");
+  const philosopherId = searchParams?.get("philosopherId") ?? "1";
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -33,13 +33,73 @@ function ChatPage() {
   const inputRef = useRef<HTMLDivElement>(null);
   const [glow, setGlow] = useState<Boolean>(false);
 
+  const formatTime = (date: Date) => {
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const fetchWithRefresh = async (input: RequestInfo, init?: RequestInit) => {
+    const response = await fetch(input, init);
+    if (response.status !== 401 && response.status !== 403) {
+      return response;
+    }
+
+    const refresh = await fetch("/api/refresh", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!refresh.ok) {
+      return response;
+    }
+
+    return fetch(input, init);
+  };
+
+  const getChat = async () => {
+    if (!philosopherId) {
+      return;
+    }
+
+    try {
+      const response = await fetchWithRefresh("/api/chat/history", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ philosopherId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load chat history");
+      }
+
+      const data = await response.json();
+      const history = data?.chat?.messages ?? [];
+      const mapped = history.map((entry: any) => ({
+        id: entry.id,
+        sender: entry.role === "user" ? "user" : philosopherId,
+        text: entry.content ?? "",
+        time: entry.created_at
+          ? formatTime(new Date(entry.created_at))
+          : formatTime(new Date()),
+      }));
+      setChatMessages(mapped);
+    } catch (error) {
+      console.error("Failed to load chat history", error);
+    }
+  };
+
   const delay = async () => {
-    console.log("function");
+    getChat();
     await new Promise((res) => setTimeout(res, 2000));
     inputRef?.current?.scrollIntoView({
       behavior: "smooth",
       block: "end",
     });
+    inputRef.current?.focus();
+
     setGlow(true);
     await new Promise((res) => setTimeout(res, 1000));
     setGlow(false);
@@ -47,7 +107,6 @@ function ChatPage() {
   useEffect(() => {
     delay();
     let isActive = true;
-
     const loadPhilosophers = async () => {
       try {
         const response = await axios.get("/api/philosophers", {
@@ -98,10 +157,9 @@ function ChatPage() {
     delay();
   }, [activePhilosopher]);
 
-  const formatTime = (date: Date) => {
-    const pad = (value: number) => String(value).padStart(2, "0");
-    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  };
+  useEffect(() => {
+    getChat();
+  }, [philosopherId]);
 
   const handleSend = async () => {
     const message = draft.trim();
@@ -128,12 +186,12 @@ function ChatPage() {
     setIsStreaming(true);
 
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetchWithRefresh("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, philosopherId }),
         credentials: "include",
       });
 

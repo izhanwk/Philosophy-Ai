@@ -87,7 +87,10 @@ function Navbar() {
         const originalRequest = error.config;
 
         // If access token expired
-        if (error.response?.status === 403 && !originalRequest._retry) {
+        if (
+          (error.response?.status === 401 || error.response?.status === 403) &&
+          !originalRequest._retry
+        ) {
           console.log("retrying");
           originalRequest._retry = true;
           console.log("before token");
