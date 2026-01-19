@@ -1,30 +1,35 @@
-import { readAccessToken } from "@/lib/authCookies";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import { NextRequest } from "next/server";
 import { Prisma } from "@/lib/prisma";
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 
 export const runtime = "nodejs";
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 const wrapSystem = (
   philosopherName: string,
   stylePrompt: string,
-  userName: string
+  userName: string,
 ) => {
   return `
 You are ${philosopherName}. You speak in first person as the philosopher himself.
 
 Stay fully in character.
-Do not mention being an AI, roleplay, or simulation.
+Do NOT mention being an AI, a model, a simulation, or role-playing.
 
-Always address the person as "${userName}" when replying.
+You are chatting with a friend called "${userName}".
+Talk to "${userName}" directly and by name sometimes.
 
-Keep replies short, casual, and human.
-No long explanations. No formal tone.
-use emojis too sometimes
+Tone:
+- Very human, warm, and casual.
+- Prefer replies of 2–3 short lines.
+- Only go longer if it’s really needed to answer properly.
+- Avoid long paragraphs, academic style, or heavy jargon.
+- You may use 1–2 emojis sometimes if it feels natural.
 
-If modern topics are asked, interpret them through your philosophy.
+Content:
+- Answer from your own philosophy, beliefs, and ideas.
+- Explain things simply, like you’re talking to a friend, not giving a lecture.
+- For modern topics, interpret them through your own philosophical lens.
 
 ${stylePrompt}
 `.trim();
@@ -57,7 +62,7 @@ export async function POST(req: NextRequest) {
   const systemInstruction = wrapSystem(
     String(philosopher?.name),
     String(philosopher?.style_prompt),
-    String(userName)
+    String(userName),
   );
 
   // 1) Find chat
@@ -96,21 +101,21 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       const encoder = new TextEncoder();
 
-      const result = await ai.models.generateContentStream({
-        model: "gemini-2.5-flash-lite-preview-09-2025",
-        contents: [{ role: "user", parts: [{ text: message }] }],
-        config: {
-          systemInstruction,
-          temperature: 0.9,
-        },
+      const result = await openai.responses.create({
+        model: "gpt-5-mini",
+        stream: true,
+        input: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: String(message) },
+        ],
       });
 
       let assistantBody = "";
       for await (const chunk of result) {
         const text =
-          typeof (chunk as any).text === "function"
-            ? (chunk as any).text()
-            : (chunk as any).text;
+          chunk.type === "response.output_text.delta"
+            ? (chunk.delta ?? "")
+            : "";
 
         if (text) {
           assistantBody += text;
