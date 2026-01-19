@@ -285,6 +285,20 @@ function ChatPage() {
         credentials: "include",
       });
 
+      if (response.status === 429) {
+        const errorText =
+          (await response.text()) ||
+          "You have reached the 24-hour message limit. Please try again later.";
+        setChatMessages((prev) =>
+          prev.map((entry) =>
+            entry.id === assistantMessageId
+              ? { ...entry, text: errorText }
+              : entry,
+          ),
+        );
+        return;
+      }
+
       if (!response.ok || !response.body) {
         throw new Error("Failed to stream response");
       }

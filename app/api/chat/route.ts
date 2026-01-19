@@ -44,6 +44,21 @@ export async function POST(req: NextRequest) {
 
   const userId = Number(userIdStr);
   const { message, philosopherId } = await req.json();
+  const limitWindowMs = 24 * 60 * 60 * 1000;
+  const limitCutoff = new Date(Date.now() - limitWindowMs);
+  const userMessageCount = await Prisma.chatmessages.count({
+    where: {
+      role: "user",
+      created_at: { gte: limitCutoff },
+      chat: { user_id: userId },
+    },
+  });
+
+  if (userMessageCount >= 50) {
+    return new Response("Message limit reached for the last 24 hours.", {
+      status: 429,
+    });
+  }
 
   let philosopher = await Prisma.philosophers.findFirst({
     where: {
