@@ -36,124 +36,136 @@ ${stylePrompt}
 };
 
 export async function POST(req: NextRequest) {
-  let userIdStr = req.headers.get("x-user-id");
+  try {
+    let userIdStr = req.headers.get("x-user-id");
 
-  if (!userIdStr) {
-    return new Response("Unauthorized", { status: 401 });
-  }
+    if (!userIdStr) {
+      return new Response("Unauthorized", { status: 401 });
+    }
 
-  const userId = Number(userIdStr);
-  const { message, philosopherId } = await req.json();
-  const limitWindowMs = 24 * 60 * 60 * 1000;
-  const limitCutoff = new Date(Date.now() - limitWindowMs);
-  const userMessageCount = await Prisma.chatmessages.count({
-    where: {
-      role: "user",
-      created_at: { gte: limitCutoff },
-      chat: { user_id: userId },
-    },
-  });
-
-  if (userMessageCount >= 50) {
-    return new Response("Message limit reached for the last 24 hours.", {
-      status: 429,
+    const userId = Number(userIdStr);
+    const { message, philosopherId } = await req.json();
+    const limitWindowMs = 24 * 60 * 60 * 1000;
+    const limitCutoff = new Date(Date.now() - limitWindowMs);
+    const userMessageCount = await Prisma.chatmessages.count({
+      where: {
+        role: "user",
+        created_at: { gte: limitCutoff },
+        chat: { user_id: userId },
+      },
     });
-  }
 
-  let philosopher = await Prisma.philosophers.findFirst({
-    where: {
-      id: Number(philosopherId),
-    },
-    select: { name: true, style_prompt: true },
-  });
+    //
 
-  const user = await Prisma.users.findFirst({
-    where: { idusers: userId },
-    select: { name: true },
-  });
+    if (userMessageCount >= 50) {
+      return new Response("Message limit reached for the last 24 hours.", {
+        status: 429,
+      });
+    }
 
-  const userName = user?.name?.split(" ")[0] ?? "friend";
+    let philosopher = await Prisma.philosophers.findFirst({
+      where: {
+        id: Number(philosopherId),
+      },
+      select: { name: true, style_prompt: true },
+    });
 
-  const systemInstruction = wrapSystem(
-    String(philosopher?.name),
-    String(philosopher?.style_prompt),
-    String(userName),
-  );
+    const user = await Prisma.users.findFirst({
+      where: { idusers: userId },
+      select: { name: true },
+    });
 
-  // 1) Find chat
-  let chat = await Prisma.chats.findFirst({
-    where: {
-      user_id: userId,
-      philosopher_id: Number(philosopherId),
-    },
-    select: { id: true },
-  });
+    const userName = user?.name?.split(" ")[0] ?? "friend";
 
-  // 2) Create chat if missing
-  if (!chat) {
-    chat = await Prisma.chats.create({
-      data: {
+    const systemInstruction = wrapSystem(
+      String(philosopher?.name),
+      String(philosopher?.style_prompt),
+      String(userName),
+    );
+
+    // 1) Find chat
+    let chat = await Prisma.chats.findFirst({
+      where: {
         user_id: userId,
         philosopher_id: Number(philosopherId),
       },
       select: { id: true },
     });
-  }
 
-  // (optional) you can also store assistant message later after generating it
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      const encoder = new TextEncoder();
-
-      const result = await openai.responses.create({
-        model: "gpt-5-mini",
-        stream: true,
-        input: [
-          { role: "system", content: systemInstruction },
-          { role: "user", content: String(message) },
-        ],
+    // 2) Create chat if missing
+    if (!chat) {
+      chat = await Prisma.chats.create({
+        data: {
+          user_id: userId,
+          philosopher_id: Number(philosopherId),
+        },
+        select: { id: true },
       });
+    }
 
-      let assistantBody = "";
-      for await (const chunk of result) {
-        const text =
-          chunk.type === "response.output_text.delta"
-            ? (chunk.delta ?? "")
-            : "";
+    // (optional) you can also store assistant message later after generating it
 
-        if (text) {
-          assistantBody += text;
-          controller.enqueue(encoder.encode(text));
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+
+        try {
+          const result = await openai.responses.create({
+            model: "gpt-5-mini",
+            stream: true,
+            input: [
+              { role: "system", content: systemInstruction },
+              { role: "user", content: String(message) },
+            ],
+          });
+
+          let assistantBody = "";
+          for await (const chunk of result) {
+            const text =
+              chunk.type === "response.output_text.delta"
+                ? (chunk.delta ?? "")
+                : "";
+
+            if (text) {
+              assistantBody += text;
+              controller.enqueue(encoder.encode(text));
+            }
+          }
+
+          await Prisma.chatmessages.create({
+            data: {
+              chat_id: chat.id,
+              role: "assistant",
+              content: assistantBody,
+            },
+            select: { id: true },
+          });
+          // 3) Store user message (now chat.id is guaranteed)
+          await Prisma.chatmessages.create({
+            data: {
+              chat_id: chat.id,
+              role: "user",
+              content: String(message),
+            },
+            select: { id: true },
+          });
+
+          controller.close();
+        } catch (error) {
+          console.error("Chat stream error:", error);
+          controller.error(error);
         }
-      }
+      },
+    });
 
-      await Prisma.chatmessages.create({
-        data: {
-          chat_id: chat.id,
-          role: "assistant",
-          content: assistantBody,
-        },
-        select: { id: true },
-      });
-      // 3) Store user message (now chat.id is guaranteed)
-      await Prisma.chatmessages.create({
-        data: {
-          chat_id: chat.id,
-          role: "user",
-          content: String(message),
-        },
-        select: { id: true },
-      });
-
-      controller.close();
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-    },
-  });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+      },
+    });
+  } catch (error) {
+    console.error("Chat handler error:", error);
+    return new Response("Internal Server Error", { status: 500 });
+  }
 }

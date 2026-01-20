@@ -37,12 +37,12 @@ export async function GET(req: NextRequest) {
   const accessToken = jwt.sign(
     { userId: user.idusers, email: user.email },
     accessSecret,
-    { expiresIn: "5m" }
+    { expiresIn: "5m" },
   );
   const refreshToken = jwt.sign(
     { userId: user.idusers, email: user.email },
     refreshSecret,
-    { expiresIn: "45d" }
+    { expiresIn: "45d" },
   );
 
   const response = redirectTo(req, "/dashboard");
