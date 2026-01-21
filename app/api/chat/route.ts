@@ -132,20 +132,21 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          await Prisma.chatmessages.create({
-            data: {
-              chat_id: chat.id,
-              role: "assistant",
-              content: assistantBody,
-            },
-            select: { id: true },
-          });
           // 3) Store user message (now chat.id is guaranteed)
           await Prisma.chatmessages.create({
             data: {
               chat_id: chat.id,
               role: "user",
               content: String(message),
+            },
+            select: { id: true },
+          });
+
+          await Prisma.chatmessages.create({
+            data: {
+              chat_id: chat.id,
+              role: "assistant",
+              content: assistantBody,
             },
             select: { id: true },
           });
