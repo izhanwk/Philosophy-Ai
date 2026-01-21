@@ -32,7 +32,7 @@ async function DashboardPage() {
           </div>
         ) : (
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {philosophers.map((philosopher) => (
+            {philosophers.map((philosopher: any) => (
               <Link
                 key={philosopher.id}
                 href={`/chat?philosopherId=${philosopher.id}`}
