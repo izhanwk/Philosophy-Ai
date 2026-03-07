@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     return redirectTo(req, "/login?error=missing_user");
   }
 
-  console.log("user exist here");
+  console.log("user exist here in this");
   const accessToken = jwt.sign(
     { userId: user.idusers, email: user.email },
     accessSecret,
