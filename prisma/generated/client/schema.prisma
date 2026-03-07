@@ -1,0 +1,80 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+  output     = "./generated/client" //previous was : output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  idusers   Int      @id @unique(map: "idusers_UNIQUE") @default(autoincrement())
+  email     String   @unique(map: "email_UNIQUE") @db.VarChar(255)
+  password  String?  @db.VarChar(255)
+  google_id String?  @db.VarChar(45)
+  createdAt DateTime @db.DateTime(0)
+  name      String?  @db.VarChar(60)
+  chats     chats[]
+}
+
+model otps {
+  id               Int          @id @default(autoincrement())
+  email            String       @db.VarChar(255)
+  otp              String       @db.VarChar(6)
+  created_at       DateTime     @default(now()) @db.DateTime(0)
+  password_purpose Boolean      @default(false)
+  otphistory       otphistory[]
+}
+
+model otphistory {
+  id               Int      @id @default(autoincrement())
+  otp_id           Int?
+  email            String   @db.VarChar(255)
+  created_at       DateTime @default(now()) @db.DateTime(0)
+  password_purpose Boolean  @default(false)
+  otps             otps?    @relation(fields: [otp_id], references: [id], map: "fk_otp_history")
+
+  @@index([otp_id], map: "fk_otp_history")
+}
+
+model otptries {
+  id_otptries      Int      @id @default(autoincrement())
+  email            String   @db.VarChar(255)
+  created_at       DateTime @db.DateTime(0)
+  password_purpose Boolean  @default(false)
+}
+
+model philosophers {
+  id           Int     @id @default(autoincrement())
+  name         String  @unique @db.VarChar(120)
+  image_url    String  @db.VarChar(500)
+  description  String  @db.Text
+  style_prompt String? @db.Text
+  chats        chats[]
+}
+
+model chats {
+  id             Int            @id @default(autoincrement())
+  user_id        Int
+  philosopher_id Int
+  created_at     DateTime       @default(now()) @db.DateTime(0)
+  messages       chatmessages[]
+  philosopher    philosophers   @relation(fields: [philosopher_id], references: [id])
+  user           users          @relation(fields: [user_id], references: [idusers])
+
+  @@index([user_id, created_at])
+  @@index([philosopher_id])
+}
+
+model chatmessages {
+  id         Int      @id @default(autoincrement())
+  chat_id    Int
+  role       String   @db.VarChar(20)
+  content    String   @db.Text
+  created_at DateTime @default(now()) @db.DateTime(0)
+  chat       chats    @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+
+  @@index([chat_id, created_at])
+}
