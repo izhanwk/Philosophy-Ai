@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     return redirectTo(req, "/login?error=auth_config");
   }
 
+  console.log("our secret : ", nextAuthSecret);
   const session = await getToken({ req, secret: nextAuthSecret });
   if (!session?.email) {
     console.log("no session");
