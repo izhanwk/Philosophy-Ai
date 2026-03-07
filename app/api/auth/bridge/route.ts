@@ -11,17 +11,19 @@ function redirectTo(req: NextRequest, path: string) {
 }
 
 export async function GET(req: NextRequest) {
+  console.log("start");
   const nextAuthSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
   const accessSecret = process.env.JWT_SECRET;
   const refreshSecret = process.env.REFRESH_JWT_SECRET;
 
   if (!nextAuthSecret || !accessSecret || !refreshSecret) {
-    console.error("Missing auth secrets for Google login bridge");
+    console.log("Missing auth secrets for Google login bridge");
     return redirectTo(req, "/login?error=auth_config");
   }
 
   const session = await getToken({ req, secret: nextAuthSecret });
   if (!session?.email) {
+    console.log("no session");
     return redirectTo(req, "/login?error=missing_session");
   }
 
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (!user) {
-    console.error("Google bridge could not find user for session email");
+    console.log("Google bridge could not find user for session email");
     return redirectTo(req, "/login?error=missing_user");
   }
 
