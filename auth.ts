@@ -13,12 +13,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, account }) {
       if (user?.email) {
         token.email = user.email;
+        console.log("our token = ", token);
       }
       if (user?.name) {
         token.name = user.name;
+        console.log("our token = ", token);
       }
       if (account?.providerAccountId) {
         token.googleId = account.providerAccountId;
+        console.log("our token = ", token);
       }
       return token;
     },
