@@ -12,7 +12,7 @@ function redirectTo(req: NextRequest, path: string) {
 
 export async function GET(req: NextRequest) {
   console.log("start");
-  const nextAuthSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  const nextAuthSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
   const accessSecret = process.env.JWT_SECRET;
   const refreshSecret = process.env.REFRESH_JWT_SECRET;
 
@@ -23,8 +23,10 @@ export async function GET(req: NextRequest) {
 
   console.log("our secret : ", nextAuthSecret);
   const session = await getToken({ req, secret: nextAuthSecret });
-  const sessionEmail = typeof session?.email === "string" ? session.email : null;
-  const sessionSub = typeof session?.sub === "string" ? session.sub : null;
+  const sessionEmail =
+    typeof session?.email === "string" ? session.email : null;
+  const sessionSub = typeof session?.sub === "string" ? session.email : null;
+  console.log("session email is : ", sessionEmail);
   if (!sessionEmail && !sessionSub) {
     console.log("no session");
     return redirectTo(req, "/login?error=missing_session");
