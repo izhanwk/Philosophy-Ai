@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
 
   console.log("our secret : ", nextAuthSecret);
   const session = await getToken({ req, secret: nextAuthSecret });
+  console.log("our session is here : ", session);
   const sessionEmail =
     typeof session?.email === "string" ? session.email : null;
   const sessionSub = typeof session?.sub === "string" ? session.email : null;
