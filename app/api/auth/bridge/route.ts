@@ -12,7 +12,7 @@ function redirectTo(req: NextRequest, path: string) {
 
 export async function GET(req: NextRequest) {
   console.log("start");
-  const nextAuthSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  const nextAuthSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
   const accessSecret = process.env.JWT_SECRET;
   const refreshSecret = process.env.REFRESH_JWT_SECRET;
 
@@ -23,14 +23,20 @@ export async function GET(req: NextRequest) {
 
   console.log("our secret : ", nextAuthSecret);
   const session = await getToken({ req, secret: nextAuthSecret });
-  if (!session?.email) {
+  const sessionEmail = typeof session?.email === "string" ? session.email : null;
+  const sessionSub = typeof session?.sub === "string" ? session.sub : null;
+  if (!sessionEmail && !sessionSub) {
     console.log("no session");
     return redirectTo(req, "/login?error=missing_session");
   }
 
-  const user = await Prisma.users.findUnique({
-    where: { email: session.email },
-  });
+  const user = sessionEmail
+    ? await Prisma.users.findUnique({
+        where: { email: sessionEmail },
+      })
+    : await Prisma.users.findFirst({
+        where: { google_id: sessionSub },
+      });
 
   if (!user) {
     console.log("Google bridge could not find user for session email");

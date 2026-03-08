@@ -16,17 +16,14 @@ export async function POST(req: NextRequest) {
     try {
       const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
       if (decoded?.email) {
-        return NextResponse.json(
-          { message: decoded.email },
-          { status: 200 }
-        );
+        return NextResponse.json({ message: decoded.email }, { status: 200 });
       }
     } catch {
       // fall back to NextAuth token check below
     }
   }
 
-  const nextAuthSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  const nextAuthSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
   if (nextAuthSecret) {
     const session = await getToken({ req, secret: nextAuthSecret });
     if (session?.email) {

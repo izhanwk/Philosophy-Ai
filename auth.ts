@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -9,6 +10,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async jwt({ token, user, account }) {
+      if (user?.email) {
+        token.email = user.email;
+      }
+      if (user?.name) {
+        token.name = user.name;
+      }
+      if (account?.providerAccountId) {
+        token.googleId = account.providerAccountId;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        if (token?.email) {
+          session.user.email = token.email as string;
+        }
+        if (token?.name) {
+          session.user.name = token.name as string;
+        }
+        if (token?.sub) {
+          (session.user as { id?: string }).id = token.sub as string;
+        }
+      }
+      return session;
+    },
     async signIn({ user, account }) {
       if (!user.email) {
         return false;
