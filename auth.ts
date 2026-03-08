@@ -27,6 +27,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
+        console.log("session : ", session.user);
         if (token?.email) {
           session.user.email = token.email as string;
         }
