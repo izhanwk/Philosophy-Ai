@@ -21,45 +21,43 @@ export async function GET(req: NextRequest) {
     return redirectTo(req, "/login?error=auth_config");
   }
 
-  console.log("our secret : ", nextAuthSecret);
-  try {
-    const token = await getToken({
-      req,
-      secret: process.env.AUTH_SECRET,
-      secureCookie: process.env.NODE_ENV === "production",
-    });
+  // console.log("our secret : ", nextAuthSecret);
+  // try {
+  //   const token = await getToken({
+  //     req,
+  //     secret: process.env.AUTH_SECRET,
+  //     secureCookie: process.env.NODE_ENV === "production",
+  //   });
 
-    console.log("token decoded:", token);
-    console.log("auth secret exists:", !!process.env.AUTH_SECRET);
-  } catch (e) {
-    console.error("getToken error:", e);
-  }
+  //   console.log("token decoded:", token);
+  //   console.log("auth secret exists:", !!process.env.AUTH_SECRET);
+  // } catch (e) {
+  //   console.error("getToken error:", e);
+  // }
   const session = await getToken({
     req,
     secret: nextAuthSecret,
     secureCookie: process.env.NODE_ENV === "production",
   });
-  console.log("our session is here : ", session);
+
   const sessionEmail =
     typeof session?.email === "string" ? session.email : null;
   const sessionSub = typeof session?.sub === "string" ? session.email : null;
-  console.log("session email is : ", sessionEmail);
+
   if (!sessionEmail && !sessionSub) {
     console.log("no session");
     return redirectTo(req, "/login?error=missing_session");
   }
 
-  const user = sessionEmail
-    ? await Prisma.users.findUnique({
-        where: { email: sessionEmail },
-      })
-    : await Prisma.users.findFirst({
-        where: { google_id: sessionSub },
-      });
+  const user =
+    sessionEmail &&
+    (await Prisma.users.findUnique({
+      where: { email: sessionEmail },
+    }));
 
   if (!user) {
     console.log("Google bridge could not find user for session email");
-    return redirectTo(req, "/login?error=missing_user");
+    return redirectTo(req, "/login");
   }
 
   console.log("user exist here in this");
