@@ -23,6 +23,17 @@ export async function GET(req: NextRequest) {
   }
 
   console.log("our secret : ", nextAuthSecret);
+  try {
+    const token = await getToken({
+      req,
+      secret: process.env.AUTH_SECRET,
+    });
+
+    console.log("token decoded:", token);
+    console.log("auth secret exists:", !!process.env.AUTH_SECRET);
+  } catch (e) {
+    console.error("getToken error:", e);
+  }
   const session = await getToken({ req, secret: nextAuthSecret });
   console.log("our session is here : ", session);
   const sessionEmail =
