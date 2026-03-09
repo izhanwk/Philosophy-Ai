@@ -12,7 +12,6 @@ function redirectTo(req: NextRequest, path: string) {
 
 export async function GET(req: NextRequest) {
   console.log("start");
-  console.log("cookie header:", req.headers.get("cookie"));
   const nextAuthSecret = process.env.AUTH_SECRET;
   const accessSecret = process.env.JWT_SECRET;
   const refreshSecret = process.env.REFRESH_JWT_SECRET;
@@ -27,6 +26,7 @@ export async function GET(req: NextRequest) {
     const token = await getToken({
       req,
       secret: process.env.AUTH_SECRET,
+      secureCookie: process.env.NODE_ENV === "production",
     });
 
     console.log("token decoded:", token);
