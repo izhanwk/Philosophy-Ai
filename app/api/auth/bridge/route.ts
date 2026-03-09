@@ -34,7 +34,11 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     console.error("getToken error:", e);
   }
-  const session = await getToken({ req, secret: nextAuthSecret });
+  const session = await getToken({
+    req,
+    secret: nextAuthSecret,
+    secureCookie: process.env.NODE_ENV === "production",
+  });
   console.log("our session is here : ", session);
   const sessionEmail =
     typeof session?.email === "string" ? session.email : null;
