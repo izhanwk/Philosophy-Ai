@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { User, ChevronDown } from "lucide-react";
 import axios from "axios";
+import ThemeLoader from "./ThemeLoader";
 
 const PUBLIC_ROUTES = new Set([
   "/",
@@ -30,6 +31,7 @@ function Navbar() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [customAuth, setCustomAuth] = useState<CustomAuthState>({
     checked: false,
     authed: false,
@@ -39,8 +41,21 @@ function Navbar() {
   const sessionEmail =
     typeof data?.user?.email === "string" ? data.user.email : "";
   const isSessionAuthed = status === "authenticated";
+  const isCheckingAuth =
+    status === "loading" || (!isSessionAuthed && !customAuth.checked);
   const isAuthed = isSessionAuthed || customAuth.authed || isLoggingOut;
   const email = sessionEmail || customAuth.email;
+  const showLoader = isCheckingAuth || isNavigating || isLoggingOut;
+
+  const navigateTo = (href: string) => {
+    if (href === path) {
+      return;
+    }
+
+    setOpen(false);
+    setIsNavigating(true);
+    router.push(href);
+  };
 
   const handleLogout = async () => {
     setOpen(false);
@@ -103,16 +118,20 @@ function Navbar() {
       return;
     }
 
+    setIsNavigating(false);
+
     if (!isSessionAuthed && !customAuth.checked) {
       return;
     }
 
     if (isAuthed && AUTH_PAGES.has(path)) {
+      setIsNavigating(true);
       router.replace("/dashboard");
       return;
     }
 
     if (!isAuthed && !PUBLIC_ROUTES.has(path)) {
+      setIsNavigating(true);
       router.replace("/");
     }
   }, [
@@ -141,12 +160,24 @@ function Navbar() {
 
   return (
     <div>
+      {showLoader ? (
+        <ThemeLoader
+          label={
+            isLoggingOut
+              ? "Closing the dialogue..."
+              : isCheckingAuth
+                ? "Checking your access..."
+                : "Opening the next page..."
+          }
+        />
+      ) : null}
+
       {/* NAV */}
       <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
         <h1
           className="text-lg sm:text-xl md:text-2xl font-bold tracking-wide text-center sm:text-left cursor-pointer select-none"
           onClick={() => {
-            router.push("/");
+            navigateTo("/");
           }}
         >
           Philosopher AI
@@ -190,7 +221,7 @@ function Navbar() {
             <button
               className="w-full cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-sm hover:bg-white/10 transition-colors sm:w-auto sm:px-5"
               onClick={() => {
-                router.push("/login");
+                navigateTo("/login");
               }}
             >
               Login
@@ -198,7 +229,7 @@ function Navbar() {
             <button
               className="w-full cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-gray-200 transition-colors sm:w-auto sm:px-5"
               onClick={() => {
-                router.push("/signup");
+                navigateTo("/signup");
               }}
             >
               Sign Up
