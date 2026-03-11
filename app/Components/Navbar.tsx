@@ -1,22 +1,46 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { User, ChevronDown } from "lucide-react";
 import axios from "axios";
-import { usePathname } from "next/navigation";
+
+const PUBLIC_ROUTES = new Set([
+  "/",
+  "/login",
+  "/signup",
+  "/signin",
+  "/otp",
+  "/forgot",
+  "/reset",
+]);
+
+const AUTH_PAGES = new Set(["/login", "/signup", "/signin"]);
+
+type CustomAuthState = {
+  checked: boolean;
+  authed: boolean;
+  email: string;
+};
 
 function Navbar() {
   const { status, data } = useSession();
   const router = useRouter();
+  const path = usePathname();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const [isAuthed, setisAuthed] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [email, setemail] = useState<string>("");
-  const path = usePathname();
-  const [jwtCorrect, setJwtCorrect] = useState(false);
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const [customAuth, setCustomAuth] = useState<CustomAuthState>({
+    checked: false,
+    authed: false,
+    email: "",
+  });
+
+  const sessionEmail =
+    typeof data?.user?.email === "string" ? data.user.email : "";
+  const isSessionAuthed = status === "authenticated";
+  const isAuthed = isSessionAuthed || customAuth.authed || isLoggingOut;
+  const email = sessionEmail || customAuth.email;
 
   const handleLogout = async () => {
     setOpen(false);
@@ -26,113 +50,80 @@ function Navbar() {
       await axios.post("/api/logout").catch(() => {});
       await signOut({ redirect: false });
     } finally {
-      setJwtCorrect(false);
-      setisAuthed(false);
+      setCustomAuth({ checked: true, authed: false, email: "" });
       router.replace("/");
     }
   };
 
   useEffect(() => {
-    if (typeof data?.user?.email === "string") {
-      setemail(data?.user?.email);
+    if (status === "loading") {
+      return;
     }
-  }, [data]);
 
-  useEffect(() => {
-    axios.defaults.withCredentials = true;
-  }, []);
+    if (isSessionAuthed) {
+      setCustomAuth((current) =>
+        current.checked || current.authed || current.email
+          ? { checked: true, authed: false, email: "" }
+          : current,
+      );
+      return;
+    }
 
-  useEffect(() => {
-    const check = async () => {
+    let cancelled = false;
+
+    const checkToken = async () => {
       try {
         const response = await axios.post("/api/checkToken");
-        const myData = response.data;
-        setJwtCorrect(true);
-        setisAuthed(true);
-        setemail(myData.message);
-      } catch (err) {
-        console.log("error response");
-        setJwtCorrect(false);
-        setisAuthed(false);
-      } finally {
-        setAuthCheckComplete(true);
+        if (!cancelled) {
+          setCustomAuth({
+            checked: true,
+            authed: true,
+            email:
+              typeof response.data?.message === "string"
+                ? response.data.message
+                : "",
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setCustomAuth({ checked: true, authed: false, email: "" });
+        }
       }
     };
 
-    check();
-  }, []); // runs once to verify token
+    checkToken();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSessionAuthed, status]);
 
   useEffect(() => {
-    if (status === "loading" || !authCheckComplete) {
-      return;
-    }
-    const authed = status === "authenticated" || jwtCorrect;
-    if (authed && !isAuthed) {
-      setisAuthed(true);
-    }
-
-    const publicRoutes = [
-      "/",
-      "/login",
-      "/signup",
-      "/signin",
-      "/otp",
-      "/forgot",
-      "/reset",
-    ];
-    const authPages = ["/login", "/signup", "/signin"];
-    if (!path) return;
-
-    const onPublicRoute = publicRoutes.includes(path);
-    if (authed && authPages.includes(path)) {
-      router.push("/dashboard");
+    if (!path || status === "loading" || isLoggingOut) {
       return;
     }
 
-    if (!authed && !onPublicRoute) {
-      router.push("/");
+    if (!isSessionAuthed && !customAuth.checked) {
+      return;
     }
-  }, [status, jwtCorrect, path, router, isAuthed, authCheckComplete]);
 
-  useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        console.log("error occurred");
-        const originalRequest = error.config;
+    if (isAuthed && AUTH_PAGES.has(path)) {
+      router.replace("/dashboard");
+      return;
+    }
 
-        // If access token expired
-        if (
-          (error.response?.status === 401 || error.response?.status === 403) &&
-          !originalRequest._retry
-        ) {
-          console.log("retrying");
-          originalRequest._retry = true;
-          console.log("before token");
-
-          try {
-            const { data } = await axios.post("/api/refresh");
-
-            if (!data?.token) {
-              throw new Error("No token in refresh response");
-            }
-            console.log("Got new token", data.token);
-
-            // retry failed request with fresh cookie-based token
-            return axios(originalRequest);
-          } catch (refreshError) {
-            console.log("Refresh failed, redirect to login : ", refreshError);
-            await axios.post("/api/logout").catch(() => {});
-            router.push("/login");
-          }
-        }
-
-        return Promise.reject(error);
-      }
-    );
-
-    return () => axios.interceptors.response.eject(interceptor);
-  }, [router]);
+    if (!isAuthed && !PUBLIC_ROUTES.has(path)) {
+      router.replace("/");
+    }
+  }, [
+    customAuth.checked,
+    isAuthed,
+    isLoggingOut,
+    isSessionAuthed,
+    path,
+    router,
+    status,
+  ]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -161,7 +152,7 @@ function Navbar() {
           Philosopher AI
         </h1>
 
-        {isAuthed || isLoggingOut ? (
+        {isAuthed ? (
           <div className="relative w-full sm:w-auto" ref={menuRef}>
             <button
               onClick={() => setOpen((v) => !v)}

@@ -103,7 +103,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // (optional) you can also store assistant message later after generating it
+    await Prisma.chatmessages.create({
+      data: {
+        chat_id: chat.id,
+        role: "user",
+        content: String(message),
+      },
+      select: { id: true },
+    });
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -131,16 +138,6 @@ export async function POST(req: NextRequest) {
               controller.enqueue(encoder.encode(text));
             }
           }
-
-          // 3) Store user message (now chat.id is guaranteed)
-          await Prisma.chatmessages.create({
-            data: {
-              chat_id: chat.id,
-              role: "user",
-              content: String(message),
-            },
-            select: { id: true },
-          });
 
           await Prisma.chatmessages.create({
             data: {

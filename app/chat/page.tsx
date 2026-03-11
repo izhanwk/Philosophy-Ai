@@ -3,7 +3,7 @@ import ChatClient from "./ChatClient";
 
 export default function Page() {
   return (
-    <Suspense>
+    <Suspense fallback={null}>
       <ChatClient />
     </Suspense>
   );

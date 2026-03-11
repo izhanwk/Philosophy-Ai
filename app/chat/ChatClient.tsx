@@ -1,5 +1,11 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Navbar from "../Components/Navbar";
@@ -36,13 +42,23 @@ function ChatClient() {
   const [oldestCursor, setOldestCursor] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
-  const [glow, setGlow] = useState<Boolean>(false);
+  const [glow, setGlow] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const shouldScrollToBottomRef = useRef(false);
+  const shouldSnapToBottomRef = useRef(false);
 
   const formatTime = (date: Date) => {
     const pad = (value: number) => String(value).padStart(2, "0");
     return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const scrollMessagesToBottom = (behavior: ScrollBehavior = "smooth") => {
+    const container = messagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({ top: container.scrollHeight, behavior });
   };
 
   const fetchWithRefresh = async (input: RequestInfo, init?: RequestInit) => {
@@ -142,13 +158,13 @@ function ChatClient() {
     }
 
     if (isStreaming) {
-      container.scrollTop = container.scrollHeight;
+      scrollMessagesToBottom("auto");
       return;
     }
 
     if (shouldScrollToBottomRef.current) {
       requestAnimationFrame(() => {
-        container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+        scrollMessagesToBottom("smooth");
       });
       setTimeout(() => {
         shouldScrollToBottomRef.current = false;
@@ -159,9 +175,22 @@ function ChatClient() {
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
     if (distanceFromBottom < 120) {
-      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+      scrollMessagesToBottom("smooth");
     }
   }, [chatMessages, isLoadingMore, isStreaming]);
+
+  useLayoutEffect(() => {
+    if (!shouldSnapToBottomRef.current) {
+      return;
+    }
+
+    const animationId = requestAnimationFrame(() => {
+      scrollMessagesToBottom("auto");
+      shouldSnapToBottomRef.current = false;
+    });
+
+    return () => cancelAnimationFrame(animationId);
+  }, [chatMessages]);
 
   const activePhilosopher = useMemo(() => {
     return (
@@ -170,6 +199,12 @@ function ChatClient() {
       ) || philosophers[0]
     );
   }, [philosophers, philosopherId]);
+
+  const philosophersById = useMemo(() => {
+    return new Map(
+      philosophers.map((philosopher) => [String(philosopher.id), philosopher]),
+    );
+  }, [philosophers]);
 
   useEffect(() => {
     delay();
@@ -200,7 +235,8 @@ function ChatClient() {
     if (mapped.length) {
       setOldestCursor(mapped[0].createdAt ?? null);
     }
-    shouldScrollToBottomRef.current = true;
+    shouldSnapToBottomRef.current = true;
+    shouldScrollToBottomRef.current = false;
   };
 
   const loadOlderMessages = async () => {
@@ -562,8 +598,8 @@ function ChatClient() {
                   ) : null}
                   {chatMessages.map((message) => {
                     const isUser = message.sender === "user";
-                    const philosopher = philosophers.find(
-                      (entry) => String(entry.id) === String(message.sender),
+                    const philosopher = philosophersById.get(
+                      String(message.sender),
                     );
                     return (
                       <div
