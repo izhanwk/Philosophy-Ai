@@ -3,8 +3,30 @@ import Link from "next/link";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import { Prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import jwt from "jsonwebtoken";
 
 async function DashboardPage() {
+  const session = await auth();
+  const accessToken = (await cookies()).get("accessToken")?.value;
+  const jwtSecret = process.env.JWT_SECRET;
+
+  let hasCustomToken = false;
+  if (accessToken && jwtSecret) {
+    try {
+      jwt.verify(accessToken, jwtSecret);
+      hasCustomToken = true;
+    } catch {
+      hasCustomToken = false;
+    }
+  }
+
+  if (!session?.user?.email && !hasCustomToken) {
+    redirect("/");
+  }
+
   const philosophers = await Prisma.philosophers.findMany({
     orderBy: { name: "asc" },
     select: {

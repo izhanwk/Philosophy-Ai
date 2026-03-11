@@ -12,10 +12,25 @@ function Navbar() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isAuthed, setisAuthed] = useState<boolean>(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [email, setemail] = useState<string>("");
   const path = usePathname();
   const [jwtCorrect, setJwtCorrect] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
+
+  const handleLogout = async () => {
+    setOpen(false);
+    setIsLoggingOut(true);
+
+    try {
+      await axios.post("/api/logout").catch(() => {});
+      await signOut({ redirect: false });
+    } finally {
+      setJwtCorrect(false);
+      setisAuthed(false);
+      router.replace("/");
+    }
+  };
 
   useEffect(() => {
     if (typeof data?.user?.email === "string") {
@@ -146,11 +161,12 @@ function Navbar() {
           Philosopher AI
         </h1>
 
-        {isAuthed ? (
+        {isAuthed || isLoggingOut ? (
           <div className="relative w-full sm:w-auto" ref={menuRef}>
             <button
               onClick={() => setOpen((v) => !v)}
               className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 transition sm:w-auto"
+              disabled={isLoggingOut}
             >
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
                 <User className="h-5 w-5" />
@@ -169,15 +185,11 @@ function Navbar() {
             {open && (
               <div className="absolute right-0 mt-2 w-40 rounded-md border border-white/10 bg-neutral-900/95 shadow-lg backdrop-blur">
                 <button
-                  className="w-full cursor-pointer text-left px-4 py-2 text-sm hover:bg-white/10"
-                  onClick={() => {
-                    setisAuthed(false);
-                    setJwtCorrect(false);
-                    axios.post("/api/logout").catch(() => {});
-                    signOut({ callbackUrl: "/" });
-                  }}
+                  className="w-full cursor-pointer text-left px-4 py-2 text-sm hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
                 >
-                  Logout
+                  {isLoggingOut ? "Logging out..." : "Logout"}
                 </button>
               </div>
             )}
