@@ -41,11 +41,11 @@ function ChatClient() {
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [oldestCursor, setOldestCursor] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLDivElement>(null);
   const [glow, setGlow] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const shouldScrollToBottomRef = useRef(false);
   const shouldSnapToBottomRef = useRef(false);
-  const scrollToBottomFrameRef = useRef<number | null>(null);
 
   const formatTime = (date: Date) => {
     const pad = (value: number) => String(value).padStart(2, "0");
@@ -59,19 +59,6 @@ function ChatClient() {
     }
 
     container.scrollTo({ top: container.scrollHeight, behavior });
-  };
-
-  const scheduleScrollMessagesToBottom = (
-    behavior: ScrollBehavior = "smooth",
-  ) => {
-    if (scrollToBottomFrameRef.current !== null) {
-      cancelAnimationFrame(scrollToBottomFrameRef.current);
-    }
-
-    scrollToBottomFrameRef.current = requestAnimationFrame(() => {
-      scrollMessagesToBottom(behavior);
-      scrollToBottomFrameRef.current = null;
-    });
   };
 
   const fetchWithRefresh = async (input: RequestInfo, init?: RequestInit) => {
@@ -119,6 +106,11 @@ function ChatClient() {
   };
 
   const delay = async () => {
+    await new Promise((res) => setTimeout(res, 500));
+    inputRef?.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
     input.current?.focus({ preventScroll: true });
 
     setGlow(true);
@@ -166,12 +158,14 @@ function ChatClient() {
     }
 
     if (isStreaming) {
-      scheduleScrollMessagesToBottom("smooth");
+      scrollMessagesToBottom("auto");
       return;
     }
 
     if (shouldScrollToBottomRef.current) {
-      scheduleScrollMessagesToBottom("smooth");
+      requestAnimationFrame(() => {
+        scrollMessagesToBottom("smooth");
+      });
       setTimeout(() => {
         shouldScrollToBottomRef.current = false;
       }, 350);
@@ -181,7 +175,7 @@ function ChatClient() {
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
     if (distanceFromBottom < 120) {
-      scheduleScrollMessagesToBottom("smooth");
+      scrollMessagesToBottom("smooth");
     }
   }, [chatMessages, isLoadingMore, isStreaming]);
 
@@ -191,20 +185,12 @@ function ChatClient() {
     }
 
     const animationId = requestAnimationFrame(() => {
-      scrollMessagesToBottom("smooth");
+      scrollMessagesToBottom("auto");
       shouldSnapToBottomRef.current = false;
     });
 
     return () => cancelAnimationFrame(animationId);
   }, [chatMessages]);
-
-  useEffect(() => {
-    return () => {
-      if (scrollToBottomFrameRef.current !== null) {
-        cancelAnimationFrame(scrollToBottomFrameRef.current);
-      }
-    };
-  }, []);
 
   const activePhilosopher = useMemo(() => {
     return (
@@ -673,7 +659,10 @@ function ChatClient() {
                 </div>
 
                 {/* Input Area */}
-                <div className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4">
+                <div
+                  ref={inputRef}
+                  className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4"
+                >
                   <div
                     className={`flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4 sm:py-3 transition-all duration-150 ${
                       glow ? "glow-effect" : ""
