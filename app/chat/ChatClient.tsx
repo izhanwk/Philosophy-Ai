@@ -41,7 +41,6 @@ function ChatClient() {
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [oldestCursor, setOldestCursor] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLDivElement>(null);
   const [glow, setGlow] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const shouldScrollToBottomRef = useRef(false);
@@ -120,11 +119,6 @@ function ChatClient() {
   };
 
   const delay = async () => {
-    await new Promise((res) => setTimeout(res, 500));
-    inputRef?.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    });
     input.current?.focus({ preventScroll: true });
 
     setGlow(true);
@@ -679,10 +673,7 @@ function ChatClient() {
                 </div>
 
                 {/* Input Area */}
-                <div
-                  ref={inputRef}
-                  className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4"
-                >
+                <div className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4">
                   <div
                     className={`flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4 sm:py-3 transition-all duration-150 ${
                       glow ? "glow-effect" : ""
