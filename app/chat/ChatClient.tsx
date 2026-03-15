@@ -145,7 +145,7 @@ function ChatClient() {
   };
 
   const delay = async () => {
-    input.current?.focus({ preventScroll: true });
+    input.current?.focus();
 
     setGlow(true);
     await new Promise((res) => setTimeout(res, 1000));
