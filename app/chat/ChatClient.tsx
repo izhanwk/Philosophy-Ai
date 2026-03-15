@@ -41,11 +41,18 @@ function ChatClient() {
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [oldestCursor, setOldestCursor] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLDivElement>(null);
   const [glow, setGlow] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const shouldScrollToBottomRef = useRef(false);
   const shouldSnapToBottomRef = useRef(false);
+  const scrollToBottomFrameRef = useRef<number | null>(null);
+  const autoScrollingRef = useRef(false);
+  const autoScrollingTimeoutRef = useRef<number | null>(null);
+  const loadOlderStateRef = useRef<{
+    container: HTMLDivElement | null;
+    previousScrollHeight: number;
+    previousScrollTop: number;
+  } | null>(null);
 
   const formatTime = (date: Date) => {
     const pad = (value: number) => String(value).padStart(2, "0");
@@ -59,6 +66,38 @@ function ChatClient() {
     }
 
     container.scrollTo({ top: container.scrollHeight, behavior });
+  };
+
+  const scheduleScrollMessagesToBottom = (
+    behavior: ScrollBehavior = "smooth",
+  ) => {
+    autoScrollingRef.current = true;
+    if (autoScrollingTimeoutRef.current !== null) {
+      window.clearTimeout(autoScrollingTimeoutRef.current);
+    }
+    autoScrollingTimeoutRef.current = window.setTimeout(
+      () => {
+        autoScrollingRef.current = false;
+        autoScrollingTimeoutRef.current = null;
+      },
+      behavior === "smooth" ? 500 : 50,
+    );
+
+    if (scrollToBottomFrameRef.current !== null) {
+      cancelAnimationFrame(scrollToBottomFrameRef.current);
+    }
+
+    scrollToBottomFrameRef.current = requestAnimationFrame(() => {
+      scrollMessagesToBottom(behavior);
+      scrollToBottomFrameRef.current = null;
+    });
+  };
+
+  const isNearBottom = (container: HTMLDivElement) => {
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    return distanceFromBottom < 120;
   };
 
   const fetchWithRefresh = async (input: RequestInfo, init?: RequestInit) => {
@@ -106,11 +145,6 @@ function ChatClient() {
   };
 
   const delay = async () => {
-    await new Promise((res) => setTimeout(res, 500));
-    inputRef?.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    });
     input.current?.focus({ preventScroll: true });
 
     setGlow(true);
@@ -158,24 +192,20 @@ function ChatClient() {
     }
 
     if (isStreaming) {
-      scrollMessagesToBottom("auto");
+      scheduleScrollMessagesToBottom("smooth");
       return;
     }
 
     if (shouldScrollToBottomRef.current) {
-      requestAnimationFrame(() => {
-        scrollMessagesToBottom("smooth");
-      });
+      scheduleScrollMessagesToBottom("smooth");
       setTimeout(() => {
         shouldScrollToBottomRef.current = false;
       }, 350);
       return;
     }
 
-    const distanceFromBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    if (distanceFromBottom < 120) {
-      scrollMessagesToBottom("smooth");
+    if (isNearBottom(container)) {
+      scheduleScrollMessagesToBottom("smooth");
     }
   }, [chatMessages, isLoadingMore, isStreaming]);
 
@@ -185,12 +215,42 @@ function ChatClient() {
     }
 
     const animationId = requestAnimationFrame(() => {
-      scrollMessagesToBottom("auto");
+      scheduleScrollMessagesToBottom("smooth");
       shouldSnapToBottomRef.current = false;
     });
 
     return () => cancelAnimationFrame(animationId);
   }, [chatMessages]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      if (
+        isStreaming ||
+        shouldSnapToBottomRef.current ||
+        shouldScrollToBottomRef.current ||
+        isNearBottom(container)
+      ) {
+        scheduleScrollMessagesToBottom("smooth");
+      }
+    });
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+      if (scrollToBottomFrameRef.current !== null) {
+        cancelAnimationFrame(scrollToBottomFrameRef.current);
+      }
+      if (autoScrollingTimeoutRef.current !== null) {
+        window.clearTimeout(autoScrollingTimeoutRef.current);
+      }
+    };
+  }, [isStreaming]);
 
   const activePhilosopher = useMemo(() => {
     return (
@@ -230,27 +290,26 @@ function ChatClient() {
         : formatTime(new Date()),
       createdAt: entry.created_at ?? null,
     }));
+    shouldSnapToBottomRef.current = true;
     setChatMessages(mapped);
     setHasMoreMessages(Boolean(data?.hasMore));
     if (mapped.length) {
       setOldestCursor(mapped[0].createdAt ?? null);
     }
-    shouldSnapToBottomRef.current = true;
     shouldScrollToBottomRef.current = false;
   };
-
-  let container: HTMLDivElement | null;
-  let previousScrollHeight: number;
-  let previousScrollTop: number;
 
   const loadOlderMessages = async () => {
     if (isLoadingMore || !hasMoreMessages || !oldestCursor) {
       return;
     }
 
-    container = messagesContainerRef.current;
-    previousScrollHeight = container?.scrollHeight ?? 0;
-    previousScrollTop = container?.scrollTop ?? 0;
+    const container = messagesContainerRef.current;
+    loadOlderStateRef.current = {
+      container,
+      previousScrollHeight: container?.scrollHeight ?? 0,
+      previousScrollTop: container?.scrollTop ?? 0,
+    };
 
     setIsLoadingMore(true);
     const data = await fetchMessagesPage(oldestCursor);
@@ -278,10 +337,13 @@ function ChatClient() {
   };
 
   useEffect(() => {
-    if (!container) {
+    const loadOlderState = loadOlderStateRef.current;
+    if (!loadOlderState?.container) {
       return;
     }
 
+    const { container, previousScrollHeight, previousScrollTop } =
+      loadOlderState;
     const newScrollHeight = container.scrollHeight;
     const target = newScrollHeight - previousScrollHeight + previousScrollTop;
 
@@ -289,6 +351,7 @@ function ChatClient() {
       top: target,
       behavior: "smooth",
     });
+    loadOlderStateRef.current = null;
   }, [chatMessages]);
 
   useEffect(() => {
@@ -590,7 +653,12 @@ function ChatClient() {
                   ref={messagesContainerRef}
                   onScroll={() => {
                     const container = messagesContainerRef.current;
-                    if (!container || isLoadingMore || !hasMoreMessages) {
+                    if (
+                      !container ||
+                      isLoadingMore ||
+                      !hasMoreMessages ||
+                      autoScrollingRef.current
+                    ) {
                       return;
                     }
                     if (container.scrollTop <= 80) {
@@ -659,10 +727,7 @@ function ChatClient() {
                 </div>
 
                 {/* Input Area */}
-                <div
-                  ref={inputRef}
-                  className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4"
-                >
+                <div className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4">
                   <div
                     className={`flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4 sm:py-3 transition-all duration-150 ${
                       glow ? "glow-effect" : ""
