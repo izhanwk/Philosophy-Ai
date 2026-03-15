@@ -54,9 +54,7 @@ export async function POST(req: NextRequest) {
   };
 
   const messages = await Prisma.chatmessages.findMany({
-    where: cursor
-      ? { created_at: { lt: new Date(String(cursor)) } }
-      : undefined,
+    where: whereClause,
     orderBy: { created_at: "desc" },
     take: fetchCount,
   });
