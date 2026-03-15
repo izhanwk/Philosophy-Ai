@@ -112,9 +112,10 @@ function ChatClient() {
     });
 
     if (!refresh.ok) {
+      console.log("not successful refresh");
       return response;
     }
-
+    console.log("success in refresh");
     return fetch(input, init);
   };
 

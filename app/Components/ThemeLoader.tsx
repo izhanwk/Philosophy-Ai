@@ -8,7 +8,7 @@ export default function ThemeLoader({
   label = "Preparing your next conversation...",
 }: ThemeLoaderProps) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/72 backdrop-blur-md">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/72 backdrop-blur-md">
       <div className="relative flex flex-col items-center gap-5 px-6 text-center">
         <div className="relative flex h-24 w-24 items-center justify-center">
           <div className="absolute h-24 w-24 rounded-full border border-amber-200/15 bg-amber-200/5" />

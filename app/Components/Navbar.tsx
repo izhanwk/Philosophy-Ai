@@ -57,6 +57,24 @@ function Navbar() {
     router.push(href);
   };
 
+  const checkTokenWithRefresh = async () => {
+    try {
+      return await axios.post("/api/checkToken");
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status !== 401 && status !== 403) {
+        throw error;
+      }
+
+      const refreshResponse = await axios.post("/api/refresh");
+      if (refreshResponse.status !== 200) {
+        throw error;
+      }
+
+      return axios.post("/api/checkToken");
+    }
+  };
+
   const handleLogout = async () => {
     setOpen(false);
     setIsLoggingOut(true);
@@ -66,6 +84,7 @@ function Navbar() {
       await signOut({ redirect: false });
     } finally {
       setCustomAuth({ checked: true, authed: false, email: "" });
+      console.log("send2");
       router.replace("/");
     }
   };
@@ -88,7 +107,7 @@ function Navbar() {
 
     const checkToken = async () => {
       try {
-        const response = await axios.post("/api/checkToken");
+        const response = await checkTokenWithRefresh();
         if (!cancelled) {
           setCustomAuth({
             checked: true,
@@ -126,12 +145,14 @@ function Navbar() {
 
     if (isAuthed && AUTH_PAGES.has(path)) {
       setIsNavigating(true);
+      console.log("towards dashboard");
       router.replace("/dashboard");
       return;
     }
 
     if (!isAuthed && !PUBLIC_ROUTES.has(path)) {
       setIsNavigating(true);
+      console.log("send1");
       router.replace("/");
     }
   }, [
