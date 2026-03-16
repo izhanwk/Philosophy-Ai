@@ -59,6 +59,7 @@ function ChatClient() {
     return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
+  //scrolling
   const scrollMessagesToBottom = (behavior: ScrollBehavior = "smooth") => {
     const container = messagesContainerRef.current;
     if (!container) {
