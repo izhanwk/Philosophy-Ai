@@ -191,72 +191,83 @@ function ChatClient() {
     };
   }, []);
 
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container || isLoadingMore) {
-      return;
-    }
+  // useEffect(() => {
+  //   const container = messagesContainerRef.current;
+  //   if (!container || isLoadingMore) {
+  //     return;
+  //   }
 
-    if (isStreaming) {
-      scheduleScrollMessagesToBottom("smooth");
-      return;
-    }
+  //   if (isStreaming) {
+  //     scheduleScrollMessagesToBottom("smooth");
+  //     return;
+  //   }
 
-    if (shouldScrollToBottomRef.current) {
-      scheduleScrollMessagesToBottom("smooth");
-      setTimeout(() => {
-        shouldScrollToBottomRef.current = false;
-      }, 350);
-      return;
-    }
+  //   if (shouldScrollToBottomRef.current) {
+  //     scheduleScrollMessagesToBottom("smooth");
+  //     setTimeout(() => {
+  //       shouldScrollToBottomRef.current = false;
+  //     }, 350);
+  //     return;
+  //   }
 
-    if (isNearBottom(container)) {
-      scheduleScrollMessagesToBottom("smooth");
-    }
-  }, [chatMessages, isLoadingMore, isStreaming]);
+  //   if (isNearBottom(container)) {
+  //     scheduleScrollMessagesToBottom("smooth");
+  //   }
+  // }, [chatMessages, isLoadingMore, isStreaming]);
 
   useLayoutEffect(() => {
+    console.log("streaming");
     if (!shouldSnapToBottomRef.current) {
+      console.log("returned");
       return;
     }
+
+    console.log("continue");
+    shouldSnapToBottomRef.current = false;
 
     const animationId = requestAnimationFrame(() => {
       scheduleScrollMessagesToBottom("smooth");
-      shouldSnapToBottomRef.current = false;
     });
 
-    return () => cancelAnimationFrame(animationId);
-  }, [chatMessages]);
-
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const observer = new ResizeObserver(() => {
-      if (
-        isStreaming ||
-        shouldSnapToBottomRef.current ||
-        shouldScrollToBottomRef.current ||
-        isNearBottom(container)
-      ) {
-        scheduleScrollMessagesToBottom("smooth");
-      }
-    });
-
-    observer.observe(container);
+    const animationTimeOut = setTimeout(() => {
+      shouldSnapToBottomRef.current = true;
+    }, 500);
 
     return () => {
-      observer.disconnect();
-      if (scrollToBottomFrameRef.current !== null) {
-        cancelAnimationFrame(scrollToBottomFrameRef.current);
-      }
-      if (autoScrollingTimeoutRef.current !== null) {
-        window.clearTimeout(autoScrollingTimeoutRef.current);
-      }
+      cancelAnimationFrame(animationId);
+      clearTimeout(animationTimeOut);
     };
-  }, [isStreaming]);
+  }, [chatMessages, isStreaming]);
+
+  // useEffect(() => {
+  //   const container = messagesContainerRef.current;
+  //   if (!container) {
+  //     return;
+  //   }
+
+  //   const observer = new ResizeObserver(() => {
+  //     if (
+  //       isStreaming ||
+  //       shouldSnapToBottomRef.current ||
+  //       shouldScrollToBottomRef.current ||
+  //       isNearBottom(container)
+  //     ) {
+  //       scheduleScrollMessagesToBottom("smooth");
+  //     }
+  //   });
+
+  //   observer.observe(container);
+
+  //   return () => {
+  //     observer.disconnect();
+  //     if (scrollToBottomFrameRef.current !== null) {
+  //       cancelAnimationFrame(scrollToBottomFrameRef.current);
+  //     }
+  //     if (autoScrollingTimeoutRef.current !== null) {
+  //       window.clearTimeout(autoScrollingTimeoutRef.current);
+  //     }
+  //   };
+  // }, [isStreaming]);
 
   const activePhilosopher = useMemo(() => {
     return (
@@ -387,6 +398,7 @@ function ChatClient() {
       time: formatTime(now),
     };
     setChatMessages((prev) => [...prev, userMessage, assistantMessage]);
+    shouldSnapToBottomRef.current = true;
     setIsStreaming(true);
 
     try {
@@ -425,6 +437,7 @@ function ChatClient() {
         done = doneReading;
 
         if (value) {
+          shouldSnapToBottomRef.current = true;
           const chunk = decoder.decode(value, { stream: !done });
           setChatMessages((prev) =>
             prev.map((entry) =>
@@ -448,6 +461,7 @@ function ChatClient() {
         ),
       );
     } finally {
+      shouldSnapToBottomRef.current = false;
       setIsStreaming(false);
     }
   };
