@@ -222,11 +222,6 @@ function ChatClient() {
       return;
     }
 
-    if (!autoScroll.current) {
-      console.log("trapped");
-      return;
-    }
-    console.log("bypass");
     shouldSnapToBottomRef.current = false;
     const animationId = requestAnimationFrame(() => {
       scrollMessagesToBottom(isStreaming ? "smooth" : "auto");
@@ -689,6 +684,7 @@ function ChatClient() {
 
                 {/* Messages Container */}
                 <div
+                  key={philosopherId}
                   ref={messagesContainerRef}
                   onScroll={() => {
                     const container = messagesContainerRef.current;
