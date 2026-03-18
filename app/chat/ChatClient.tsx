@@ -48,6 +48,7 @@ function ChatClient() {
   const scrollToBottomFrameRef = useRef<number | null>(null);
   const autoScrollingRef = useRef(false);
   const autoScrollingTimeoutRef = useRef<number | null>(null);
+  const autoScroll = useRef<Boolean>(true);
   const loadOlderStateRef = useRef<{
     container: HTMLDivElement | null;
     previousScrollHeight: number;
@@ -65,7 +66,6 @@ function ChatClient() {
     if (!container) {
       return;
     }
-
     container.scrollTo({ top: container.scrollHeight, behavior });
   };
 
@@ -217,20 +217,24 @@ function ChatClient() {
 
   useLayoutEffect(() => {
     console.log("streaming");
+
     if (!shouldSnapToBottomRef.current) {
-      console.log("returned");
       return;
     }
 
-    console.log("continue");
+    if (!autoScroll.current) {
+      console.log("trapped");
+      return;
+    }
+    console.log("bypass");
     shouldSnapToBottomRef.current = false;
-
     const animationId = requestAnimationFrame(() => {
-      scheduleScrollMessagesToBottom("smooth");
+      scrollMessagesToBottom(isStreaming ? "smooth" : "auto");
     });
 
     const animationTimeOut = setTimeout(() => {
       shouldSnapToBottomRef.current = true;
+      autoScroll.current = false;
     }, 500);
 
     return () => {
@@ -344,6 +348,7 @@ function ChatClient() {
         : formatTime(new Date()),
       createdAt: entry.created_at ?? null,
     }));
+    autoScroll.current = true;
     setChatMessages((prev) => [...mapped, ...prev]);
     setHasMoreMessages(Boolean(data?.hasMore));
     if (mapped.length) {
@@ -399,6 +404,7 @@ function ChatClient() {
     };
     setChatMessages((prev) => [...prev, userMessage, assistantMessage]);
     shouldSnapToBottomRef.current = true;
+    autoScroll.current = true;
     setIsStreaming(true);
 
     try {
@@ -464,6 +470,19 @@ function ChatClient() {
       shouldSnapToBottomRef.current = false;
       setIsStreaming(false);
     }
+  };
+
+  const stopProgrammaticScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Snap to current position — this cancels any in-progress smooth scroll
+    container.scrollTo({
+      top: container.scrollTop,
+      behavior: "instant",
+    });
+
+    // autoScroll.current = false;
   };
 
   return (
@@ -673,6 +692,12 @@ function ChatClient() {
                   ref={messagesContainerRef}
                   onScroll={() => {
                     const container = messagesContainerRef.current;
+                    // if (autoScroll.current) {
+                    //   console.log("programmatic scroll");
+                    //   return;
+                    // }
+                    // console.log("manual scroll");
+                    // autoScroll.current = false;
                     if (
                       !container ||
                       isLoadingMore ||
