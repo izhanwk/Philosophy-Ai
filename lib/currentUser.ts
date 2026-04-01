@@ -44,6 +44,17 @@ function decodeAccessToken(token: string | null | undefined) {
 export async function getCurrentUserFromRequest(
   req: NextRequest,
 ): Promise<AppUser | null> {
+  const session = await auth();
+  if (session?.user?.email) {
+    const user = await Prisma.users.findUnique({
+      where: { email: session.user.email },
+      select: appUserSelect,
+    });
+    if (user) {
+      return user;
+    }
+  }
+
   const headerUserId = req.headers.get("x-user-id");
   if (headerUserId) {
     const user = await Prisma.users.findUnique({
