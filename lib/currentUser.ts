@@ -44,53 +44,118 @@ function decodeAccessToken(token: string | null | undefined) {
 export async function getCurrentUserFromRequest(
   req: NextRequest,
 ): Promise<AppUser | null> {
-  const session = await auth();
-  if (session?.user?.email) {
-    const user = await Prisma.users.findUnique({
-      where: { email: session.user.email },
-      select: appUserSelect,
-    });
-    if (user) {
-      return user;
+  try {
+    const session = await auth();
+    if (session?.user?.email) {
+      const user = await Prisma.users.findUnique({
+        where: { email: session.user.email },
+        select: appUserSelect,
+      });
+      if (user) {
+        console.log("[auth] currentUser: resolved from auth()", {
+          email: session.user.email,
+        });
+        return user;
+      }
+      console.warn("[auth] currentUser: auth() email not found in users table", {
+        email: session.user.email,
+      });
+    } else {
+      console.warn("[auth] currentUser: auth() did not expose session email");
     }
+  } catch (error) {
+    console.error("[auth] currentUser: auth() lookup failed", error);
   }
 
-  const headerUserId = req.headers.get("x-user-id");
-  if (headerUserId) {
-    const user = await Prisma.users.findUnique({
-      where: { idusers: Number(headerUserId) },
-      select: appUserSelect,
-    });
-    if (user) {
-      return user;
+  try {
+    const headerUserId = req.headers.get("x-user-id");
+    if (headerUserId) {
+      const user = await Prisma.users.findUnique({
+        where: { idusers: Number(headerUserId) },
+        select: appUserSelect,
+      });
+      if (user) {
+        console.log("[auth] currentUser: resolved from x-user-id header", {
+          userId: headerUserId,
+        });
+        return user;
+      }
+      console.warn("[auth] currentUser: x-user-id header not found in db", {
+        userId: headerUserId,
+      });
+    } else {
+      console.warn("[auth] currentUser: no x-user-id header present");
     }
+  } catch (error) {
+    console.error("[auth] currentUser: x-user-id lookup failed", error);
   }
 
-  const accessPayload = decodeAccessToken(readAccessToken(req));
-  if (accessPayload?.userId !== undefined && accessPayload?.userId !== null) {
-    const user = await Prisma.users.findUnique({
-      where: { idusers: Number(accessPayload.userId) },
-      select: appUserSelect,
-    });
-    if (user) {
-      return user;
+  try {
+    const accessToken = readAccessToken(req);
+    const accessPayload = decodeAccessToken(accessToken);
+    if (
+      accessPayload?.userId !== undefined &&
+      accessPayload?.userId !== null
+    ) {
+      const user = await Prisma.users.findUnique({
+        where: { idusers: Number(accessPayload.userId) },
+        select: appUserSelect,
+      });
+      if (user) {
+        console.log("[auth] currentUser: resolved from custom accessToken", {
+          userId: accessPayload.userId,
+        });
+        return user;
+      }
+      console.warn("[auth] currentUser: accessToken user missing in db", {
+        userId: accessPayload.userId,
+      });
+    } else {
+      console.warn("[auth] currentUser: custom accessToken missing or invalid");
     }
+  } catch (error) {
+    console.error("[auth] currentUser: custom accessToken lookup failed", error);
   }
 
-  const nextAuthSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
-  if (!nextAuthSecret) {
+  try {
+    const nextAuthSecret =
+      process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+    if (!nextAuthSecret) {
+      console.warn("[auth] currentUser: no AUTH_SECRET/NEXTAUTH_SECRET set");
+      return null;
+    }
+
+    const token = await getToken({
+      req,
+      secret: nextAuthSecret,
+      secureCookie: process.env.NODE_ENV === "production",
+    });
+
+    if (!token?.email) {
+      console.warn("[auth] currentUser: getToken() returned no email");
+      return null;
+    }
+
+    const user = await Prisma.users.findUnique({
+      where: { email: token.email },
+      select: appUserSelect,
+    });
+
+    if (user) {
+      console.log("[auth] currentUser: resolved from getToken()", {
+        email: token.email,
+      });
+      return user;
+    }
+
+    console.warn("[auth] currentUser: getToken() email not found in db", {
+      email: token.email,
+    });
+    return null;
+  } catch (error) {
+    console.error("[auth] currentUser: getToken() lookup failed", error);
     return null;
   }
-
-  const token = await getToken({ req, secret: nextAuthSecret });
-  if (!token?.email) {
-    return null;
-  }
-
-  return Prisma.users.findUnique({
-    where: { email: token.email },
-    select: appUserSelect,
-  });
 }
 
 export async function getCurrentUserForPage(): Promise<AppUser | null> {
