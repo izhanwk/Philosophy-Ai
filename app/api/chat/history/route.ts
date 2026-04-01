@@ -1,9 +1,56 @@
 import { readAccessToken } from "@/lib/authCookies";
+import { getCurrentUserFromRequest } from "@/lib/currentUser";
 import { Prisma } from "@/lib/prisma";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  const currentUser = await getCurrentUserFromRequest(req);
+  if (currentUser) {
+    const { philosopherId, cursor } = await req.json();
+
+    if (!philosopherId) {
+      return NextResponse.json(
+        { message: "Missing philosopherId" },
+        { status: 400 },
+      );
+    }
+
+    const chat = await Prisma.chats.findFirst({
+      where: {
+        user_id: currentUser.idusers,
+        philosopher_id: Number(philosopherId),
+      },
+    });
+
+    if (!chat) {
+      return NextResponse.json(
+        { messages: [], hasMore: false },
+        { status: 200 },
+      );
+    }
+
+    const pageSize = 10;
+    const fetchCount = pageSize + 1;
+    const whereClause = {
+      chat_id: chat.id,
+      ...(cursor
+        ? { created_at: { lt: new Date(String(cursor)) } }
+        : undefined),
+    };
+
+    const messages = await Prisma.chatmessages.findMany({
+      where: whereClause,
+      orderBy: { created_at: "desc" },
+      take: fetchCount,
+    });
+
+    const hasMore = messages.length > pageSize;
+    const sliced = messages.slice(0, pageSize).reverse();
+
+    return NextResponse.json({ messages: sliced, hasMore }, { status: 200 });
+  }
+
   const token = readAccessToken(req);
   const secret = process.env.JWT_SECRET;
   let userIdStr = req.headers.get("x-user-id");

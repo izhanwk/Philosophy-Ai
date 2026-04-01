@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server";
+import { getDailyMessageLimit } from "@/lib/billing";
+import { getCurrentUserFromRequest } from "@/lib/currentUser";
 import { Prisma } from "@/lib/prisma";
 import OpenAI from "openai";
 
@@ -37,13 +39,12 @@ ${stylePrompt}
 
 export async function POST(req: NextRequest) {
   try {
-    let userIdStr = req.headers.get("x-user-id");
-
-    if (!userIdStr) {
+    const currentUser = await getCurrentUserFromRequest(req);
+    if (!currentUser) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const userId = Number(userIdStr);
+    const userId = currentUser.idusers;
     const { message, philosopherId } = await req.json();
     const limitWindowMs = 24 * 60 * 60 * 1000;
     const limitCutoff = new Date(Date.now() - limitWindowMs);
@@ -57,10 +58,15 @@ export async function POST(req: NextRequest) {
 
     //
 
-    if (userMessageCount >= 50) {
-      return new Response("Message limit reached for the last 24 hours.", {
+    const dailyLimit = getDailyMessageLimit(currentUser);
+
+    if (userMessageCount >= dailyLimit) {
+      return new Response(
+        `Message limit reached for the last 24 hours. Your current plan allows ${dailyLimit} messages per day.`,
+        {
         status: 429,
-      });
+        },
+      );
     }
 
     let philosopher = await Prisma.philosophers.findFirst({
@@ -70,12 +76,7 @@ export async function POST(req: NextRequest) {
       select: { name: true, style_prompt: true },
     });
 
-    const user = await Prisma.users.findFirst({
-      where: { idusers: userId },
-      select: { name: true },
-    });
-
-    const userName = user?.name?.split(" ")[0] ?? "friend";
+    const userName = currentUser.name?.split(" ")[0] ?? "friend";
 
     const systemInstruction = wrapSystem(
       String(philosopher?.name),

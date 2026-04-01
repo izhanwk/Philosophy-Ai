@@ -28,6 +28,15 @@ type Message = {
   createdAt?: string;
 };
 
+type BillingStatus = {
+  plan: string;
+  hasActiveSubscription: boolean;
+  dailyLimit: number;
+  usedMessagesLast24Hours: number;
+  remainingMessages: number;
+  proMonthlyPriceUsd: number;
+};
+
 function ChatClient() {
   const [philosophers, setPhilosophers] = useState<Philosopher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +49,11 @@ function ChatClient() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [oldestCursor, setOldestCursor] = useState<string | null>(null);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  const [billingLoading, setBillingLoading] = useState<"checkout" | "portal" | null>(
+    null,
+  );
+  const [limitNotice, setLimitNotice] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [glow, setGlow] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -115,6 +129,47 @@ function ChatClient() {
     }
   };
 
+  const loadBillingStatus = async () => {
+    try {
+      const response = await fetchWithRefresh("/api/billing/status", {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      setBillingStatus(data);
+    } catch (error) {
+      console.error("Failed to load billing status", error);
+    }
+  };
+
+  const openBilling = async (endpoint: "/api/billing/checkout" | "/api/billing/portal") => {
+    const action = endpoint.includes("portal") ? "portal" : "checkout";
+
+    try {
+      setBillingLoading(action);
+      const response = await fetchWithRefresh(endpoint, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data?.url) {
+        throw new Error(data?.message || "Billing request failed");
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error("Failed to open billing flow", error);
+      setLimitNotice("Billing is temporarily unavailable. Please try again.");
+    } finally {
+      setBillingLoading(null);
+    }
+  };
+
   const delay = async () => {
     input.current?.focus({ preventScroll: true });
     input.current?.scrollIntoView({
@@ -154,6 +209,7 @@ function ChatClient() {
     };
 
     loadPhilosophers();
+    loadBillingStatus();
 
     return () => {
       isActive = false;
@@ -293,6 +349,7 @@ function ChatClient() {
     }
 
     setDraft("");
+    setLimitNotice(null);
     shouldScrollToBottomRef.current = true;
     const now = new Date();
     const userMessage: Message = {
@@ -309,6 +366,15 @@ function ChatClient() {
       time: formatTime(now),
     };
     setChatMessages((prev) => [...prev, userMessage, assistantMessage]);
+    setBillingStatus((prev) =>
+      prev
+        ? {
+            ...prev,
+            usedMessagesLast24Hours: prev.usedMessagesLast24Hours + 1,
+            remainingMessages: Math.max(prev.remainingMessages - 1, 0),
+          }
+        : prev,
+    );
     shouldSnapToBottomRef.current = true;
     setIsStreaming(true);
 
@@ -326,6 +392,8 @@ function ChatClient() {
         const errorText =
           (await response.text()) ||
           "You have reached the 24-hour message limit. Please try again later.";
+        await loadBillingStatus();
+        setLimitNotice(errorText);
         setChatMessages((prev) =>
           prev.map((entry) =>
             entry.id === assistantMessageId
@@ -573,9 +641,13 @@ function ChatClient() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-emerald-300 sm:text-xs">
+                <div className="flex items-center gap-1.5 text-[10px] text-emerald-300 sm:text-xs">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                    <span className="hidden sm:inline">Online</span>
+                    <span className="hidden sm:inline">
+                      {billingStatus
+                        ? `${billingStatus.remainingMessages}/${billingStatus.dailyLimit} left`
+                        : "Online"}
+                    </span>
                   </div>
                 </div>
 
@@ -661,6 +733,55 @@ function ChatClient() {
 
                 {/* Input Area */}
                 <div className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4">
+                  {billingStatus ? (
+                    <div className="mb-3 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-200 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-medium text-white">
+                          {billingStatus.plan}
+                        </p>
+                        <p className="text-xs text-zinc-400 sm:text-sm">
+                          {billingStatus.usedMessagesLast24Hours} of {billingStatus.dailyLimit} messages used in the last 24 hours
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          openBilling(
+                            billingStatus.hasActiveSubscription
+                              ? "/api/billing/portal"
+                              : "/api/billing/checkout",
+                          )
+                        }
+                        disabled={billingLoading !== null}
+                        className="inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {billingLoading === "checkout"
+                          ? "Opening checkout..."
+                          : billingLoading === "portal"
+                            ? "Opening billing..."
+                            : billingStatus.hasActiveSubscription
+                              ? "Manage plan"
+                              : `Upgrade to ${billingStatus.dailyLimit === 100 ? "Pro" : "100/day"} for $${billingStatus.proMonthlyPriceUsd}/mo`}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {limitNotice ? (
+                    <div className="mb-3 flex flex-col gap-3 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-50 sm:flex-row sm:items-center sm:justify-between">
+                      <p>{limitNotice}</p>
+                      {billingStatus && !billingStatus.hasActiveSubscription ? (
+                        <button
+                          onClick={() => openBilling("/api/billing/checkout")}
+                          disabled={billingLoading !== null}
+                          className="inline-flex items-center justify-center rounded-full bg-amber-300 px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {billingLoading === "checkout"
+                            ? "Opening secure checkout..."
+                            : "Unlock 100 messages/day"}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   <div
                     className={`flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4 sm:py-3 transition-all duration-150 ${
                       glow ? "glow-effect" : ""

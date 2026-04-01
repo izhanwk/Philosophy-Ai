@@ -2,28 +2,16 @@ import React from "react";
 import Link from "next/link";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
+import BillingCard from "../Components/BillingCard";
+import { hasActiveSubscription } from "@/lib/billing";
 import { Prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-import { cookies } from "next/headers";
+import { getCurrentUserForPage } from "@/lib/currentUser";
 import { redirect } from "next/navigation";
-import jwt from "jsonwebtoken";
 
 async function DashboardPage() {
-  const session = await auth();
-  const accessToken = (await cookies()).get("accessToken")?.value;
-  const jwtSecret = process.env.JWT_SECRET;
+  const currentUser = await getCurrentUserForPage();
 
-  let hasCustomToken = false;
-  if (accessToken && jwtSecret) {
-    try {
-      jwt.verify(accessToken, jwtSecret);
-      hasCustomToken = true;
-    } catch {
-      hasCustomToken = false;
-    }
-  }
-
-  if (!session?.user?.email && !hasCustomToken) {
+  if (!currentUser) {
     redirect("/");
   }
 
@@ -47,6 +35,13 @@ async function DashboardPage() {
         <p className="mt-2 text-sm text-zinc-300">
           Click a philosopher to start a conversation.
         </p>
+
+        <BillingCard
+          hasActiveSubscription={hasActiveSubscription(currentUser)}
+          currentPeriodEnd={
+            currentUser.subscription_current_period_end?.toISOString() ?? null
+          }
+        />
 
         {philosophers.length === 0 ? (
           <div className="mt-10 rounded-lg border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-300">

@@ -6,7 +6,8 @@ const httpServer = createServer();
 
 const io = new Server(httpServer, {
   cors: {
-    origin: "*",
+    origin: ["https://mern-fitness-app-one.vercel.app", "http://localhost:3000"],
+    methods: ["GET", "POST"],
   },
 });
 

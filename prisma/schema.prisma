@@ -8,13 +8,20 @@ datasource db {
 }
 
 model users {
-  idusers   Int      @id @unique(map: "idusers_UNIQUE") @default(autoincrement())
-  email     String   @unique(map: "email_UNIQUE") @db.VarChar(255)
-  password  String?  @db.VarChar(255)
-  google_id String?  @db.VarChar(45)
-  createdAt DateTime @db.DateTime(0)
-  name      String?  @db.VarChar(60)
-  chats     chats[]
+  idusers                          Int       @id @unique(map: "idusers_UNIQUE") @default(autoincrement())
+  email                            String    @unique(map: "email_UNIQUE") @db.VarChar(255)
+  password                         String?   @db.VarChar(255)
+  google_id                        String?   @db.VarChar(45)
+  createdAt                        DateTime  @db.DateTime(0)
+  name                             String?   @db.VarChar(60)
+  stripe_customer_id               String?   @unique(map: "stripe_customer_id_UNIQUE") @db.VarChar(255)
+  stripe_subscription_id           String?   @unique(map: "stripe_subscription_id_UNIQUE") @db.VarChar(255)
+  lemon_customer_id                String?   @unique(map: "lemon_customer_id_UNIQUE") @db.VarChar(255)
+  lemon_subscription_id            String?   @unique(map: "lemon_subscription_id_UNIQUE") @db.VarChar(255)
+  subscription_status              String?   @db.VarChar(40)
+  subscription_price_id            String?   @db.VarChar(255)
+  subscription_current_period_end  DateTime? @db.DateTime(0)
+  chats                            chats[]
 }
 
 model otps {
