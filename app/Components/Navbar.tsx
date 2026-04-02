@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { User, ChevronDown } from "lucide-react";
+import { User, ChevronDown, LogOut } from "lucide-react";
 import axios from "axios";
 import ThemeLoader from "./ThemeLoader";
 
@@ -48,10 +48,7 @@ function Navbar() {
   const showLoader = isCheckingAuth || isNavigating || isLoggingOut;
 
   const navigateTo = (href: string) => {
-    if (href === path) {
-      return;
-    }
-
+    if (href === path) return;
     setOpen(false);
     setIsNavigating(true);
     router.push(href);
@@ -62,15 +59,9 @@ function Navbar() {
       return await axios.post("/api/checkToken");
     } catch (error: any) {
       const status = error?.response?.status;
-      if (status !== 401 && status !== 403) {
-        throw error;
-      }
-
+      if (status !== 401 && status !== 403) throw error;
       const refreshResponse = await axios.post("/api/refresh");
-      if (refreshResponse.status !== 200) {
-        throw error;
-      }
-
+      if (refreshResponse.status !== 200) throw error;
       return axios.post("/api/checkToken");
     }
   };
@@ -78,22 +69,17 @@ function Navbar() {
   const handleLogout = async () => {
     setOpen(false);
     setIsLoggingOut(true);
-
     try {
       await axios.post("/api/logout").catch(() => {});
       await signOut({ redirect: false });
     } finally {
       setCustomAuth({ checked: true, authed: false, email: "" });
-      console.log("send2");
       router.replace("/");
     }
   };
 
   useEffect(() => {
-    if (status === "loading") {
-      return;
-    }
-
+    if (status === "loading") return;
     if (isSessionAuthed) {
       setCustomAuth((current) =>
         current.checked || current.authed || current.email
@@ -102,9 +88,7 @@ function Navbar() {
       );
       return;
     }
-
     let cancelled = false;
-
     const checkToken = async () => {
       try {
         const response = await checkTokenWithRefresh();
@@ -124,64 +108,38 @@ function Navbar() {
         }
       }
     };
-
     checkToken();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [isSessionAuthed, status]);
 
   useEffect(() => {
-    if (!path || status === "loading" || isLoggingOut) {
-      return;
-    }
-
+    if (!path || status === "loading" || isLoggingOut) return;
     setIsNavigating(false);
-
-    if (!isSessionAuthed && !customAuth.checked) {
-      return;
-    }
-
+    if (!isSessionAuthed && !customAuth.checked) return;
     if (isAuthed && AUTH_PAGES.has(path)) {
       setIsNavigating(true);
-      console.log("towards dashboard");
       router.replace("/dashboard");
       return;
     }
-
     if (!isAuthed && !PUBLIC_ROUTES.has(path)) {
       setIsNavigating(true);
-      console.log("send1");
       router.replace("/");
     }
-  }, [
-    customAuth.checked,
-    isAuthed,
-    isLoggingOut,
-    isSessionAuthed,
-    path,
-    router,
-    status,
-  ]);
+  }, [customAuth.checked, isAuthed, isLoggingOut, isSessionAuthed, path, router, status]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClick(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     }
-
-    if (open) {
-      document.addEventListener("mousedown", handleClick);
-    }
+    if (open) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
   return (
     <div>
-      {showLoader ? (
+      {showLoader && (
         <ThemeLoader
           label={
             isLoggingOut
@@ -191,73 +149,74 @@ function Navbar() {
                 : "Opening the next page..."
           }
         />
-      ) : null}
+      )}
 
-      {/* NAV */}
       <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
+        {/* Brand */}
         <h1
-          className="text-lg sm:text-xl md:text-2xl font-bold tracking-wide text-center sm:text-left cursor-pointer select-none"
-          onClick={() => {
-            navigateTo("/");
-          }}
+          className="cursor-pointer select-none text-lg font-bold tracking-tight sm:text-xl"
+          onClick={() => navigateTo("/")}
         >
-          Philosopher AI
+          <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+            Philosopher
+          </span>{" "}
+          AI
         </h1>
 
         {isAuthed ? (
           <div className="relative w-full sm:w-auto" ref={menuRef}>
             <button
               onClick={() => setOpen((v) => !v)}
-              className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 transition sm:w-auto"
+              className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm transition hover:bg-white/8 hover:border-white/20 sm:w-auto"
               disabled={isLoggingOut}
             >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
-                <User className="h-5 w-5" />
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-amber-300/20 bg-amber-300/10 text-amber-200">
+                <User className="h-4 w-4" />
               </span>
               <div className="flex flex-col text-left">
-                <span className="font-semibold">{email}</span>
-                <span className="text-xs text-white/70">Logged in</span>
+                <span className="text-xs font-semibold text-white truncate max-w-[140px]">{email}</span>
+                <span className="text-[10px] text-zinc-500">Logged in</span>
               </div>
               <ChevronDown
-                className={`h-4 w-4 opacity-70 transition-transform ${
-                  open ? "-rotate-180" : ""
-                }`}
+                className={`h-4 w-4 text-zinc-500 transition-transform ${open ? "-rotate-180" : ""}`}
               />
             </button>
 
             {open && (
-              <div className="absolute right-0 mt-2 w-40 rounded-md border border-white/10 bg-neutral-900/95 shadow-lg backdrop-blur">
+              <div className="absolute right-0 mt-2 w-44 rounded-xl border border-white/10 bg-zinc-900/95 shadow-xl backdrop-blur-md">
                 <button
-                  className="w-full cursor-pointer text-left px-4 py-2 text-sm hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-4 py-2.5 text-sm text-zinc-300 transition hover:bg-white/8 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={handleLogout}
                   disabled={isLoggingOut}
                 >
+                  <LogOut size={14} className="text-zinc-500" />
                   {isLoggingOut ? "Logging out..." : "Logout"}
                 </button>
               </div>
             )}
           </div>
         ) : (
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-2">
             <button
-              className="w-full cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-sm hover:bg-white/10 transition-colors sm:w-auto sm:px-5"
-              onClick={() => {
-                navigateTo("/login");
-              }}
+              className="w-full cursor-pointer rounded-xl border border-white/15 px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/8 hover:text-white sm:w-auto sm:px-5"
+              onClick={() => navigateTo("/login")}
             >
               Login
             </button>
             <button
-              className="w-full cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-gray-200 transition-colors sm:w-auto sm:px-5"
-              onClick={() => {
-                navigateTo("/signup");
-              }}
+              className="w-full cursor-pointer rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 active:scale-95 sm:w-auto sm:px-5"
+              onClick={() => navigateTo("/signup")}
             >
               Sign Up
             </button>
           </div>
         )}
       </nav>
+
+      {/* Subtle divider */}
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
+      </div>
     </div>
   );
 }

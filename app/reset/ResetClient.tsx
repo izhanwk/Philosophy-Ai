@@ -211,11 +211,11 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-linear-to-br from-zinc-900 to-black text-white flex flex-col">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_60%),linear-gradient(to_bottom_right,_#18181b,_#09090b)] text-white flex flex-col">
       <Navbar />
 
       {alertInfo && (
-        <div className="px-4 sm:px-6 md:px-8 mt-4">
+        <div className="mx-auto mt-4 w-full max-w-5xl px-4 sm:px-6">
           <Alert
             variant={alertInfo.variant ?? "info"}
             message={alertInfo.message}
@@ -223,82 +223,130 @@ export default function ResetPasswordPage() {
         </div>
       )}
 
-      <div className="flex flex-1 items-center justify-center px-3 py-6 sm:py-10 md:py-14">
-        <div className="w-full max-w-md sm:max-w-lg md:max-w-xl">
-          <div className="bg-zinc-800/50 w-full border border-zinc-700 p-8 sm:p-10 rounded-xl backdrop-blur-md">
-            <h2 className="text-center text-xl sm:text-2xl font-bold">
-              Enter the code
-            </h2>
-            <p className="text-center text-sm text-zinc-400 mb-4">
-              We sent a 6-digit code to{" "}
-              <span className="font-semibold">{email}</span>
+      <section className="mx-auto w-full max-w-5xl flex-1 px-4 pb-12 pt-10 sm:px-6 sm:pt-12">
+        <div className="mx-auto max-w-3xl">
+          <div className="flex flex-col gap-1 text-center">
+            <p className="text-xs uppercase tracking-[0.35em] text-amber-200/60">
+              Account Recovery
             </p>
+            <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
+              Finish the{" "}
+              <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+                reset
+              </span>
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-zinc-400 sm:text-base">
+              Enter the six-digit code sent to your email and choose a fresh
+              password for your account.
+            </p>
+          </div>
 
-            <div className="flex justify-between gap-2" onPaste={handlePaste}>
-              {Array.from({ length: 6 }).map((_, index) => (
+          <div className="mt-6 h-px w-full bg-gradient-to-r from-amber-400/20 via-white/5 to-transparent" />
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.14),_transparent_35%),linear-gradient(145deg,rgba(24,24,27,0.96),rgba(9,9,11,1))] p-6 shadow-2xl shadow-black/20 sm:p-8">
+              <div className="mb-8">
+                <p className="text-xs uppercase tracking-[0.3em] text-amber-200/70">
+                  Verification
+                </p>
+                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                  Enter the code
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-zinc-300">
+                  We sent a 6-digit code to{" "}
+                  <span className="font-semibold text-white">{email}</span>
+                </p>
+              </div>
+
+              <div
+                className="flex justify-between gap-2 sm:gap-3"
+                onPaste={handlePaste}
+              >
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    maxLength={1}
+                    value={otpValues[index]}
+                    ref={(el: HTMLInputElement | null) => {
+                      inputRefs.current[index] = el;
+                    }}
+                    inputMode="numeric"
+                    className="h-12 w-10 rounded-2xl border border-zinc-700/80 bg-zinc-950/75 text-center text-lg text-white outline-none transition focus:border-amber-400/50 focus:ring-2 focus:ring-amber-300/15 sm:h-14 sm:w-12 sm:text-xl"
+                    onChange={(e) => handleChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onFocus={(e) => e.target.select()}
+                    autoComplete="one-time-code"
+                  />
+                ))}
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <label className="text-sm font-semibold text-zinc-200">
+                  New password
+                </label>
                 <input
-                  key={index}
-                  type="text"
-                  maxLength={1}
-                  value={otpValues[index]}
-                  ref={(el: HTMLInputElement | null) => {
-                    inputRefs.current[index] = el;
-                  }}
-                  inputMode="numeric"
-                  className="w-10 h-12 text-center text-xl rounded-lg bg-zinc-900 border border-zinc-700 focus:border-blue-500 focus:outline-none transition"
-                  onChange={(e) => handleChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  onFocus={(e) => e.target.select()}
-                  autoComplete="one-time-code"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-2xl border border-zinc-700/80 bg-zinc-950/70 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-zinc-500 focus:border-amber-400/50 focus:ring-2 focus:ring-amber-300/15 sm:px-5 sm:py-4 sm:text-base"
+                  placeholder="Create a new password"
                 />
-              ))}
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <label className="text-sm font-semibold text-zinc-200">
+                  Confirm password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-2xl border border-zinc-700/80 bg-zinc-950/70 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-zinc-500 focus:border-amber-400/50 focus:ring-2 focus:ring-amber-300/15 sm:px-5 sm:py-4 sm:text-base"
+                  placeholder="Re-enter your new password"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={onSubmit}
+                disabled={isSubmitting}
+                className="mt-6 w-full rounded-2xl bg-amber-300 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:opacity-50 sm:py-4 sm:text-base"
+              >
+                {isSubmitting ? "Updating..." : "Update password"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="mx-auto mt-4 block text-sm font-medium text-amber-300 transition-colors hover:text-amber-200"
+              >
+                Back to login
+              </button>
             </div>
 
-            <div className="mt-6 space-y-3">
-              <label className="text-sm font-semibold text-zinc-200">
-                New password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-sm sm:text-base placeholder:text-zinc-500"
-                placeholder="Create a new password"
-              />
-            </div>
-
-            <div className="mt-3 space-y-3">
-              <label className="text-sm font-semibold text-zinc-200">
-                Confirm password
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-sm sm:text-base placeholder:text-zinc-500"
-                placeholder="Re-enter your new password"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={onSubmit}
-              disabled={isSubmitting}
-              className="w-full mt-6 py-3 bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-40 transition"
-            >
-              {isSubmitting ? "Updating..." : "Update password"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => router.push("/login")}
-              className="block mx-auto mt-4 text-blue-400 hover:text-blue-300 text-sm"
-            >
-              Back to login
-            </button>
+            <aside className="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur sm:p-8">
+              <p className="text-xs uppercase tracking-[0.28em] text-amber-200/70">
+                Final Step
+              </p>
+              <div className="mt-5 space-y-3">
+                {[
+                  "Paste the OTP directly into the code boxes if you received it on desktop.",
+                  "Pick a password with at least six characters.",
+                  "Once updated, you will be redirected back to login.",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm leading-6 text-zinc-300"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </aside>
           </div>
         </div>
-      </div>
+      </section>
       <Footer />
     </main>
   );

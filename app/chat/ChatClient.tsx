@@ -11,7 +11,7 @@ import { useSearchParams } from "next/navigation";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import axios from "axios";
-import { User, Menu, X, Send } from "lucide-react";
+import { User, Menu, X, Send, ArrowLeft, ArrowUpRight } from "lucide-react";
 
 type Philosopher = {
   id: string | number;
@@ -446,7 +446,7 @@ function ChatClient() {
   };
 
   return (
-    <main className="min-h-screen bg-linear-to-br from-zinc-900 to-black text-white flex flex-col">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_60%),linear-gradient(to_bottom_right,_#18181b,_#09090b)] text-white flex flex-col">
       <Navbar />
       <section className="flex-1">
         <div className="mx-auto w-full max-w-6xl flex flex-col gap-4 px-3 py-4 sm:px-4 sm:py-6 lg:px-8 lg:py-10">
@@ -487,17 +487,32 @@ function ChatClient() {
 
           {/* Desktop Header */}
           <header className="hidden lg:flex flex-col gap-3">
-            <p className="text-sm uppercase tracking-[0.35em] text-amber-200/70">
-              Dialogue Room
-            </p>
-            <h1 className="text-2xl font-semibold text-white sm:text-3xl lg:text-4xl">
-              Philosophy Chat
-            </h1>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.35em] text-amber-200/70">
+                  Dialogue Room
+                </p>
+                <h1 className="text-2xl font-semibold text-white sm:text-3xl lg:text-4xl">
+                  Philosophy{" "}
+                  <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+                    Chat
+                  </span>
+                </h1>
+              </div>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 transition hover:border-amber-400/30 hover:bg-white/10 hover:text-white"
+              >
+                <ArrowLeft size={16} />
+                Back to dashboard
+              </Link>
+            </div>
             <p className="max-w-2xl text-sm text-zinc-300 sm:text-base">
               Explore timeless questions in a modern chat format. Each voice is
               grounded in a different tradition, so the conversation stays rich
               and multi-perspective.
             </p>
+            <div className="h-px w-full bg-gradient-to-r from-amber-400/20 via-white/5 to-transparent" />
           </header>
 
           {loading && philosophers.length === 0 ? (
@@ -520,7 +535,7 @@ function ChatClient() {
                 onClick={() => setShowPhilosopherSidebar(false)}
               />
               <aside
-                className={`chat-scrollbar fixed left-0 top-0 z-50 h-full w-[280px] overflow-y-auto rounded-r-3xl border-r border-white/10 bg-black/95 p-4 backdrop-blur-xl transition-transform duration-300 ease-out lg:hidden sm:p-5 ${
+                className={`chat-scrollbar fixed left-0 top-0 z-50 h-full w-[280px] overflow-y-auto rounded-r-3xl border-r border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.12),_transparent_35%),linear-gradient(180deg,rgba(9,9,11,0.98),rgba(24,24,27,0.98))] p-4 backdrop-blur-xl transition-transform duration-300 ease-out lg:hidden sm:p-5 ${
                   showPhilosopherSidebar ? "translate-x-0" : "-translate-x-full"
                 }`}
                 aria-hidden={!showPhilosopherSidebar}
@@ -581,13 +596,18 @@ function ChatClient() {
               </aside>
 
               {/* Desktop Sidebar */}
-              <aside className="hidden lg:block lg:w-[280px] rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur h-fit">
+              <aside className="hidden h-fit rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.08),_transparent_40%),rgba(255,255,255,0.03)] p-5 backdrop-blur lg:block lg:w-[300px]">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">
-                    Philosophers
-                  </h2>
-                  <span className="text-xs text-zinc-400">
-                    {philosophers.length} online
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.28em] text-amber-200/60">
+                      Thinkers
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-white">
+                      Philosophers
+                    </h2>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-400">
+                    {philosophers.length} voices
                   </span>
                 </div>
                 <div className="mt-4 flex flex-col gap-3">
@@ -597,16 +617,16 @@ function ChatClient() {
                       <Link
                         key={philosopher.id}
                         href={`/chat?philosopherId=${philosopher.id}`}
-                        className={`flex items-center gap-3 rounded-2xl border px-3 py-2 transition ${
+                        className={`group flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${
                           isActive
                             ? "border-amber-300/50 bg-amber-300/10"
-                            : "border-white/10 bg-white/5 hover:border-white/30"
+                            : "border-white/10 bg-white/5 hover:border-amber-400/20 hover:bg-white/8"
                         }`}
                       >
                         <img
                           src={philosopher.image_url}
                           alt={philosopher.name}
-                          className="h-10 w-10 rounded-full object-cover"
+                          className="h-11 w-11 rounded-full object-cover"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-white">
@@ -616,6 +636,9 @@ function ChatClient() {
                             {philosopher.description}
                           </p>
                         </div>
+                        <span className="rounded-full border border-white/10 bg-black/20 p-1.5 text-zinc-500 transition group-hover:border-amber-400/30 group-hover:text-amber-300">
+                          <ArrowUpRight size={12} />
+                        </span>
                       </Link>
                     );
                   })}
@@ -623,9 +646,9 @@ function ChatClient() {
               </aside>
 
               {/* Main Chat Area */}
-              <div className="flex-1 flex flex-col rounded-3xl border border-white/10 bg-black/40 backdrop-blur h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] lg:h-[80vh]">
+              <div className="flex-1 flex flex-col rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.08),_transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.22))] backdrop-blur h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] lg:h-[80vh]">
                 {/* Chat Header */}
-                <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4">
+                <div className="flex items-center justify-between border-b border-white/10 px-3 py-3 sm:px-4 lg:px-6 lg:py-4">
                   <div className="flex items-center gap-3">
                     <img
                       src={activePhilosopher?.image_url}
@@ -641,7 +664,7 @@ function ChatClient() {
                       </p>
                     </div>
                   </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-emerald-300 sm:text-xs">
+                <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[10px] text-emerald-300 sm:text-xs">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                     <span className="hidden sm:inline">
                       {billingStatus
@@ -709,7 +732,7 @@ function ChatClient() {
                             <div className="flex items-center gap-2">
                               <span className="h-3 w-3 animate-spin rounded-full border-2 border-amber-300/60 border-t-transparent" />
                               <span className="text-xs text-amber-200/70">
-                                Thinking
+                                Thinking...
                               </span>
                             </div>
                           ) : null}

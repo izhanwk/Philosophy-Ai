@@ -3,25 +3,25 @@ import React from "react";
 function Footer() {
   const currentYear = new Date().getFullYear();
   return (
-    <div>
-      {/* FOOTER */}
-      <footer className="py-4 sm:py-6 text-center border-t border-white/10">
-        <p className="text-white/40 text-xs sm:text-sm">
-          © {currentYear} Philosopher AI. All rights reserved.
+    <footer className="mt-auto border-t border-white/8 py-6 sm:py-8 text-center">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+        <p className="text-xs text-zinc-600 sm:text-sm">
+          © {currentYear}{" "}
+          <span className="text-zinc-500">Philosopher AI</span>. All rights reserved.
         </p>
-        <div className="mt-2 flex justify-center gap-4 text-white/30 text-[10px] sm:text-xs">
-          <a href="#" className="hover:text-white/60 transition-colors">
+        <div className="mt-2.5 flex justify-center gap-5 text-[11px] sm:text-xs">
+          <a href="#" className="text-zinc-600 transition-colors hover:text-amber-300/80">
             Privacy Policy
           </a>
-          <a href="#" className="hover:text-white/60 transition-colors">
+          <a href="#" className="text-zinc-600 transition-colors hover:text-amber-300/80">
             Terms of Service
           </a>
-          <a href="#" className="hover:text-white/60 transition-colors">
+          <a href="#" className="text-zinc-600 transition-colors hover:text-amber-300/80">
             Contact
           </a>
         </div>
-      </footer>
-    </div>
+      </div>
+    </footer>
   );
 }
 

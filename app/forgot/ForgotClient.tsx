@@ -15,6 +15,7 @@ type ForgotForm = {
 export default function ForgotPasswordPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+
   useEffect(() => {
     const guardFromUrl = searchParams.get("guard");
     const guardFromSession =
@@ -29,6 +30,7 @@ export default function ForgotPasswordPage() {
       return;
     }
   }, [router, searchParams]);
+
   const [alertInfo, setAlertInfo] = useState<{
     message: string;
     variant?: "success" | "error" | "warning" | "info";
@@ -76,11 +78,11 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="min-h-screen bg-linear-to-br from-zinc-900 to-black text-white flex flex-col">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_60%),linear-gradient(to_bottom_right,_#18181b,_#09090b)] text-white flex flex-col">
       <Navbar />
 
       {alertInfo && (
-        <div className="px-4 sm:px-6 md:px-8 mt-4">
+        <div className="mx-auto mt-4 w-full max-w-5xl px-4 sm:px-6">
           <Alert
             variant={alertInfo.variant ?? "error"}
             message={alertInfo.message}
@@ -88,67 +90,110 @@ export default function ForgotPasswordPage() {
         </div>
       )}
 
-      <div className="flex flex-1 items-center justify-center px-4 py-6 sm:py-8 md:py-16">
-        <div className="w-full max-w-md sm:max-w-lg md:max-w-xl">
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="w-full bg-zinc-800/50 backdrop-blur-md border border-zinc-700/40 p-5 sm:p-6 md:p-8 lg:p-12 rounded-2xl sm:rounded-3xl shadow-xl space-y-6 sm:space-y-8 md:space-y-10"
-          >
-            <p className="text-xl sm:text-2xl md:text-3xl font-extrabold text-center tracking-wide">
-              Reset your password
+      <section className="mx-auto w-full max-w-5xl flex-1 px-4 pb-12 pt-10 sm:px-6 sm:pt-12">
+        <div className="mx-auto max-w-2xl">
+          <div className="flex flex-col gap-1 text-center">
+            <p className="text-xs uppercase tracking-[0.35em] text-amber-200/60">
+              Account Recovery
             </p>
-            <p className="text-center text-sm text-zinc-400">
-              Enter your account email and weâ€™ll send a 6-digit code.
+            <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
+              Reset your{" "}
+              <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+                password
+              </span>
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-zinc-400 sm:text-base">
+              Enter the email tied to your Philosopher AI account and we&apos;ll
+              send a 6-digit reset code.
             </p>
+          </div>
 
-            <div className="space-y-2 sm:space-y-3">
-              <label className="text-sm sm:text-base mb-1 sm:mb-2 block font-semibold text-zinc-200">
-                Email
-              </label>
+          <div className="mt-6 h-px w-full bg-gradient-to-r from-amber-400/20 via-white/5 to-transparent" />
 
-              <input
-                type="email"
-                className="w-full px-4 py-3 sm:px-5 sm:py-4 rounded-xl sm:rounded-2xl bg-zinc-900/80 border border-zinc-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-sm sm:text-base placeholder:text-zinc-500"
-                placeholder="you@example.com"
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: {
-                    value: /[^@\s]+@[^@\s]+\.[^@\s]+/,
-                    message: "Please enter a valid email address",
-                  },
-                })}
-              />
-
-              {errors.email && (
-                <p className="text-red-400 text-xs sm:text-sm font-medium mt-1 flex items-center gap-1.5 sm:gap-2">
-                  <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
-                  {String(errors.email.message)}
+          <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.14),_transparent_35%),linear-gradient(145deg,rgba(24,24,27,0.96),rgba(9,9,11,1))] p-6 shadow-2xl shadow-black/20 sm:p-8">
+              <div className="mb-8">
+                <p className="text-xs uppercase tracking-[0.3em] text-amber-200/70">
+                  Secure Access
                 </p>
-              )}
-            </div>
+                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                  Send reset code
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-zinc-300">
+                  We&apos;ll send a one-time code to your inbox so you can set a
+                  new password without exposing the old one.
+                </p>
+              </div>
 
-            <button
-              type="submit"
-              disabled={isSending}
-              className="w-full py-3 sm:py-4 rounded-xl sm:rounded-2xl cursor-pointer bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold text-sm sm:text-base md:text-lg shadow-xl hover:shadow-blue-500/30 active:scale-95 disabled:opacity-50"
-            >
-              {isSending ? "Sending code..." : "Send reset code"}
-            </button>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-zinc-200">
+                    Email
+                  </label>
 
-            <div className="text-center pt-1 sm:pt-2">
-              <p className="text-zinc-400 text-xs sm:text-sm md:text-base">
-                Remembered it?{" "}
-                <a
-                  href="/login"
-                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                  <input
+                    type="email"
+                    className="w-full rounded-2xl border border-zinc-700/80 bg-zinc-950/70 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-zinc-500 focus:border-amber-400/50 focus:ring-2 focus:ring-amber-300/15 sm:px-5 sm:py-4 sm:text-base"
+                    placeholder="you@example.com"
+                    {...register("email", {
+                      required: "Email is required",
+                      pattern: {
+                        value: /[^@\s]+@[^@\s]+\.[^@\s]+/,
+                        message: "Please enter a valid email address",
+                      },
+                    })}
+                  />
+
+                  {errors.email && (
+                    <p className="flex items-center gap-2 text-xs font-medium text-red-400 sm:text-sm">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                      {String(errors.email.message)}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSending}
+                  className="w-full rounded-2xl bg-amber-300 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:opacity-50 sm:py-4 sm:text-base"
                 >
-                  Back to login
-                </a>
-              </p>
+                  {isSending ? "Sending code..." : "Send reset code"}
+                </button>
+
+                <div className="text-center text-sm text-zinc-400">
+                  Remembered it?{" "}
+                  <a
+                    href="/login"
+                    className="font-semibold text-amber-300 transition-colors hover:text-amber-200"
+                  >
+                    Back to login
+                  </a>
+                </div>
+              </form>
             </div>
-          </form>
+
+            <aside className="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur sm:p-8">
+              <p className="text-xs uppercase tracking-[0.28em] text-amber-200/70">
+                What Happens
+              </p>
+              <div className="mt-5 space-y-3">
+                {[
+                  "We verify the email against your existing account.",
+                  "A 6-digit code is sent so the reset stays time-limited.",
+                  "You will set the new password on the next screen.",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm leading-6 text-zinc-300"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
         </div>
-      </div>
+      </section>
 
       <Footer />
     </main>
