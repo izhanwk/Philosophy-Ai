@@ -86,8 +86,7 @@ async function syncSubscription(payload: LemonWebhookPayload) {
     attributes?.customer_id !== undefined && attributes?.customer_id !== null
       ? String(attributes.customer_id)
       : null;
-  const periodEnd =
-    attributes?.renews_at ?? attributes?.ends_at ?? null;
+  const periodEnd = attributes?.renews_at ?? attributes?.ends_at ?? null;
 
   await Prisma.users.update({
     where: { idusers: user.idusers },
@@ -105,24 +104,19 @@ async function syncSubscription(payload: LemonWebhookPayload) {
 }
 
 async function clearSubscription(payload: LemonWebhookPayload) {
-  const subscriptionId = payload.data?.id ? String(payload.data.id) : null;
-  const customerId =
-    payload.data?.attributes?.customer_id !== undefined &&
-    payload.data?.attributes?.customer_id !== null
-      ? String(payload.data.attributes.customer_id)
-      : null;
+  const user = await findUserForSubscriptionEvent(payload);
+
+  if (!user) {
+    return;
+  }
+
   const periodEnd =
     payload.data?.attributes?.ends_at ??
     payload.data?.attributes?.renews_at ??
     null;
 
-  await Prisma.users.updateMany({
-    where: {
-      OR: [
-        ...(subscriptionId ? [{ lemon_subscription_id: subscriptionId }] : []),
-        ...(customerId ? [{ lemon_customer_id: customerId }] : []),
-      ],
-    },
+  await Prisma.users.update({
+    where: { idusers: user.idusers },
     data: {
       subscription_status: payload.data?.attributes?.status ?? "expired",
       subscription_current_period_end: periodEnd ? new Date(periodEnd) : null,

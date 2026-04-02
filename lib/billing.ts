@@ -9,7 +9,9 @@ type SubscriptionShape = {
   subscription_current_period_end?: Date | null;
 };
 
-export function hasActiveSubscription(user: SubscriptionShape | null | undefined) {
+export function hasActiveSubscription(
+  user: SubscriptionShape | null | undefined,
+) {
   if (!user?.subscription_status) {
     return false;
   }
@@ -25,7 +27,9 @@ export function hasActiveSubscription(user: SubscriptionShape | null | undefined
   return user.subscription_current_period_end.getTime() > Date.now();
 }
 
-export function getDailyMessageLimit(user: SubscriptionShape | null | undefined) {
+export function getDailyMessageLimit(
+  user: SubscriptionShape | null | undefined,
+) {
   return hasActiveSubscription(user) ? PRO_DAILY_LIMIT : FREE_DAILY_LIMIT;
 }
 
@@ -35,8 +39,4 @@ export function getBillingPlanLabel(
   return hasActiveSubscription(user) ? "Philosophy Pro" : "Starter";
 }
 
-export {
-  FREE_DAILY_LIMIT,
-  PRO_DAILY_LIMIT,
-  PRO_MONTHLY_PRICE_USD,
-};
+export { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT, PRO_MONTHLY_PRICE_USD };

@@ -33,6 +33,9 @@ export async function POST(req: NextRequest) {
     }
 
     const origin = getOrigin(req);
+    const variantId = Number(getLemonSqueezyVariantId());
+    const storeId = String(getLemonSqueezyStoreId());
+    const testMode = isLemonSqueezyTestMode();
     const payload = {
       data: {
         type: "checkouts",
@@ -50,29 +53,28 @@ export async function POST(req: NextRequest) {
             logo: true,
             desc: true,
             subscription_preview: true,
-            dark: true,
             button_color: "#fcd34d",
           },
           product_options: {
-            enabled_variants: [Number(getLemonSqueezyVariantId())],
+            enabled_variants: [variantId],
             redirect_url: `${origin}/dashboard?billing=success`,
             receipt_link_url: `${origin}/dashboard`,
-            receipt_button_text: "Back to Philosophy AI",
+            receipt_button_text: "Back to Philosopher AI",
           },
           expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-          test_mode: isLemonSqueezyTestMode(),
+          test_mode: testMode,
         },
         relationships: {
           store: {
             data: {
               type: "stores",
-              id: String(getLemonSqueezyStoreId()),
+              id: storeId,
             },
           },
           variant: {
             data: {
               type: "variants",
-              id: String(getLemonSqueezyVariantId()),
+              id: String(variantId),
             },
           },
         },
@@ -88,6 +90,14 @@ export async function POST(req: NextRequest) {
     if (!url) {
       throw new Error("Checkout URL missing from Lemon Squeezy response");
     }
+
+    console.info("[billing] Lemon checkout created", {
+      url,
+      storeId,
+      variantId,
+      testMode,
+      userId: user.idusers,
+    });
 
     return NextResponse.json({ url }, { status: 200 });
   } catch (error) {

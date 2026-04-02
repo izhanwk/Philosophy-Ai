@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { headers } from "next/headers";
 
 const API_BASE = "https://api.lemonsqueezy.com/v1";
 
@@ -40,7 +41,10 @@ export function getLemonHeaders() {
   };
 }
 
-export async function lemonFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export async function lemonFetch<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
@@ -51,7 +55,9 @@ export async function lemonFetch<T>(path: string, init?: RequestInit): Promise<T
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Lemon Squeezy API error (${response.status}): ${errorText}`);
+    throw new Error(
+      `Lemon Squeezy API error (${response.status}): ${errorText}`,
+    );
   }
 
   return response.json() as Promise<T>;

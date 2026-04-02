@@ -31,9 +31,9 @@ export default function BillingCard({
   currentPeriodEnd,
 }: BillingCardProps) {
   const searchParams = useSearchParams();
-  const [loadingAction, setLoadingAction] = useState<"checkout" | "portal" | null>(
-    null,
-  );
+  const [loadingAction, setLoadingAction] = useState<
+    "checkout" | "portal" | null
+  >(null);
   const renewalDate = useMemo(
     () => formatRenewal(currentPeriodEnd),
     [currentPeriodEnd],
@@ -41,7 +41,10 @@ export default function BillingCard({
 
   const billingState = searchParams?.get("billing");
 
-  const openBillingUrl = async (endpoint: string, action: "checkout" | "portal") => {
+  const openBillingUrl = async (
+    endpoint: string,
+    action: "checkout" | "portal",
+  ) => {
     try {
       setLoadingAction(action);
       const response = await fetch(endpoint, {
@@ -75,7 +78,9 @@ export default function BillingCard({
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              {hasActiveSubscription ? "Philosophy Pro is active" : "Upgrade to Philosophy Pro"}
+              {hasActiveSubscription
+                ? "Philosophy Pro is active"
+                : "Upgrade to Philosophy Pro"}
             </h2>
             <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-100">
               ${PRO_MONTHLY_PRICE_USD}/month
@@ -83,19 +88,22 @@ export default function BillingCard({
           </div>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base">
-            Move from {FREE_DAILY_LIMIT} to {PRO_DAILY_LIMIT} messages every 24 hours.
-            Secure card payments are handled by Lemon Squeezy, with Visa and Mastercard supported.
+            Move from {FREE_DAILY_LIMIT} to {PRO_DAILY_LIMIT} messages every 24
+            hours. Secure card payments are handled by Lemon Squeezy, with Visa
+            and Mastercard supported.
           </p>
 
           {billingState === "success" ? (
             <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-              Payment received. Your subscription should unlock automatically as soon as Lemon Squeezy confirms it.
+              Payment received. Your subscription should unlock automatically as
+              soon as Lemon Squeezy confirms it.
             </div>
           ) : null}
 
           {billingState === "cancelled" ? (
             <div className="mt-4 rounded-2xl border border-zinc-700 bg-white/5 px-4 py-3 text-sm text-zinc-300">
-              Checkout was cancelled. Your current plan stays active until you upgrade.
+              Checkout was cancelled. Your current plan stays active until you
+              upgrade.
             </div>
           ) : null}
 
@@ -106,15 +114,21 @@ export default function BillingCard({
                 disabled={loadingAction !== null}
                 className="inline-flex items-center justify-center rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loadingAction === "portal" ? "Opening billing..." : "Manage subscription"}
+                {loadingAction === "portal"
+                  ? "Opening billing..."
+                  : "Manage subscription"}
               </button>
             ) : (
               <button
-                onClick={() => openBillingUrl("/api/billing/checkout", "checkout")}
+                onClick={() =>
+                  openBillingUrl("/api/billing/checkout", "checkout")
+                }
                 disabled={loadingAction !== null}
                 className="inline-flex items-center justify-center rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loadingAction === "checkout" ? "Opening secure checkout..." : "Upgrade now"}
+                {loadingAction === "checkout"
+                  ? "Opening secure checkout..."
+                  : "Upgrade now"}
               </button>
             )}
 
@@ -130,7 +144,8 @@ export default function BillingCard({
 
           {hasActiveSubscription && renewalDate ? (
             <p className="mt-4 text-sm text-zinc-300">
-              Your higher limit stays active through {renewalDate}, subject to Lemon Squeezy billing status.
+              Your higher limit stays active through {renewalDate}, subject to
+              Lemon Squeezy billing status.
             </p>
           ) : null}
         </div>

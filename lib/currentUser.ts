@@ -57,9 +57,12 @@ export async function getCurrentUserFromRequest(
         });
         return user;
       }
-      console.warn("[auth] currentUser: auth() email not found in users table", {
-        email: session.user.email,
-      });
+      console.warn(
+        "[auth] currentUser: auth() email not found in users table",
+        {
+          email: session.user.email,
+        },
+      );
     } else {
       console.warn("[auth] currentUser: auth() did not expose session email");
     }
@@ -93,10 +96,7 @@ export async function getCurrentUserFromRequest(
   try {
     const accessToken = readAccessToken(req);
     const accessPayload = decodeAccessToken(accessToken);
-    if (
-      accessPayload?.userId !== undefined &&
-      accessPayload?.userId !== null
-    ) {
+    if (accessPayload?.userId !== undefined && accessPayload?.userId !== null) {
       const user = await Prisma.users.findUnique({
         where: { idusers: Number(accessPayload.userId) },
         select: appUserSelect,
@@ -114,7 +114,10 @@ export async function getCurrentUserFromRequest(
       console.warn("[auth] currentUser: custom accessToken missing or invalid");
     }
   } catch (error) {
-    console.error("[auth] currentUser: custom accessToken lookup failed", error);
+    console.error(
+      "[auth] currentUser: custom accessToken lookup failed",
+      error,
+    );
   }
 
   try {
@@ -159,16 +162,16 @@ export async function getCurrentUserFromRequest(
 }
 
 export async function getCurrentUserForPage(): Promise<AppUser | null> {
-  const session = await auth();
-  if (session?.user?.email) {
-    const user = await Prisma.users.findUnique({
-      where: { email: session.user.email },
-      select: appUserSelect,
-    });
-    if (user) {
-      return user;
-    }
-  }
+  // const session = await auth();
+  // if (session?.user?.email) {
+  //   const user = await Prisma.users.findUnique({
+  //     where: { email: session.user.email },
+  //     select: appUserSelect,
+  //   });
+  //   if (user) {
+  //     return user;
+  //   }
+  // }
 
   const accessToken = (await cookies()).get("accessToken")?.value;
   const accessPayload = decodeAccessToken(accessToken);
