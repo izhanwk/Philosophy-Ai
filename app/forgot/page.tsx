@@ -1,9 +1,18 @@
+import { getCurrentUserForPage } from "@/lib/currentUser";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import RouteFallback from "../Components/RouteFallback";
 import ForgotClient from "./ForgotClient";
 
-export default function Page() {
+export default async function Page() {
+  const currentUser = await getCurrentUserForPage();
+
+  if (currentUser) {
+    redirect("/dashboard");
+  }
+
   return (
-    <Suspense>
+    <Suspense fallback={<RouteFallback label="Opening account recovery..." />}>
       <ForgotClient />
     </Suspense>
   );

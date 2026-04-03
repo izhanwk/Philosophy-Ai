@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import { useForm } from "react-hook-form";
@@ -162,12 +163,12 @@ export default function ForgotPasswordPage() {
 
                 <div className="text-center text-sm text-zinc-400">
                   Remembered it?{" "}
-                  <a
+                  <Link
                     href="/login"
                     className="font-semibold text-amber-300 transition-colors hover:text-amber-200"
                   >
                     Back to login
-                  </a>
+                  </Link>
                 </div>
               </form>
             </div>

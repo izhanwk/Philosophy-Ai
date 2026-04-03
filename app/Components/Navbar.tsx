@@ -6,18 +6,6 @@ import { User, ChevronDown, LogOut } from "lucide-react";
 import axios from "axios";
 import ThemeLoader from "./ThemeLoader";
 
-const PUBLIC_ROUTES = new Set([
-  "/",
-  "/login",
-  "/signup",
-  "/signin",
-  "/otp",
-  "/forgot",
-  "/reset",
-]);
-
-const AUTH_PAGES = new Set(["/login", "/signup", "/signin"]);
-
 type CustomAuthState = {
   checked: boolean;
   authed: boolean;
@@ -46,6 +34,7 @@ function Navbar() {
   const isAuthed = isSessionAuthed || customAuth.authed || isLoggingOut;
   const email = sessionEmail || customAuth.email;
   const showLoader = isCheckingAuth || isNavigating || isLoggingOut;
+  const brandHref = isAuthed ? "/dashboard" : "/";
 
   const navigateTo = (href: string) => {
     if (href === path) return;
@@ -115,17 +104,7 @@ function Navbar() {
   useEffect(() => {
     if (!path || status === "loading" || isLoggingOut) return;
     setIsNavigating(false);
-    if (!isSessionAuthed && !customAuth.checked) return;
-    if (isAuthed && AUTH_PAGES.has(path)) {
-      setIsNavigating(true);
-      router.replace("/dashboard");
-      return;
-    }
-    if (!isAuthed && !PUBLIC_ROUTES.has(path)) {
-      setIsNavigating(true);
-      router.replace("/");
-    }
-  }, [customAuth.checked, isAuthed, isLoggingOut, isSessionAuthed, path, router, status]);
+  }, [isLoggingOut, path, status]);
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
@@ -155,7 +134,7 @@ function Navbar() {
         {/* Brand */}
         <h1
           className="cursor-pointer select-none text-lg font-bold tracking-tight sm:text-xl"
-          onClick={() => navigateTo("/")}
+          onClick={() => navigateTo(brandHref)}
         >
           <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
             Philosopher

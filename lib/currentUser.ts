@@ -162,16 +162,20 @@ export async function getCurrentUserFromRequest(
 }
 
 export async function getCurrentUserForPage(): Promise<AppUser | null> {
-  // const session = await auth();
-  // if (session?.user?.email) {
-  //   const user = await Prisma.users.findUnique({
-  //     where: { email: session.user.email },
-  //     select: appUserSelect,
-  //   });
-  //   if (user) {
-  //     return user;
-  //   }
-  // }
+  try {
+    const session = await auth();
+    if (session?.user?.email) {
+      const user = await Prisma.users.findUnique({
+        where: { email: session.user.email },
+        select: appUserSelect,
+      });
+      if (user) {
+        return user;
+      }
+    }
+  } catch (error) {
+    console.error("[auth] currentUserForPage: auth() lookup failed", error);
+  }
 
   const accessToken = (await cookies()).get("accessToken")?.value;
   const accessPayload = decodeAccessToken(accessToken);
