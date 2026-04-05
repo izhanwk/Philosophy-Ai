@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.NEXTAUTH_URL ??
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000");
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://philosophy-ai-1bpi.vercel.app"),
+  metadataBase: new URL(siteUrl),
   title: "Philosopher AI",
   description:
     "Speak with history's greatest philosophers through a modern AI chat experience.",
@@ -29,11 +36,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Philosopher AI",
     description: "Explore the minds of history's greatest thinkers.",
-    url: "/",
+    url: siteUrl,
     siteName: "Philosopher AI",
     images: [
       {
-        url: "/og-logo.svg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Philosopher AI social preview",
@@ -46,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Philosopher AI",
     description: "Explore the minds of history's greatest thinkers.",
-    images: ["/og-logo.svg"],
+    images: ["/opengraph-image"],
   },
 };
 
