@@ -38,14 +38,6 @@ export const metadata: Metadata = {
     description: "Explore the minds of history's greatest thinkers.",
     url: siteUrl,
     siteName: "Philosopher AI",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "Philosopher AI social preview",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -53,7 +45,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Philosopher AI",
     description: "Explore the minds of history's greatest thinkers.",
-    images: ["/opengraph-image"],
   },
 };
 
