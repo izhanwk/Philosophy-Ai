@@ -101,6 +101,36 @@ Start the app:
 npm run dev
 ```
 
+Run the test suite:
+
+```bash
+npm test
+```
+
+Run all tests serially:
+
+```bash
+npm test -- --runInBand
+```
+
+Run only backend API route tests:
+
+```bash
+npm test -- app/api --runInBand
+```
+
+Run a single test file:
+
+```bash
+npm test -- app/api/login/__tests__/route.test.ts --runInBand
+```
+
+Generate a coverage report:
+
+```bash
+npm run test:coverage -- --runInBand
+```
+
 ## Production Notes
 
 - Billing state is synchronized into the local `users` table from Lemon Squeezy webhooks.

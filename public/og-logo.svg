@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0b0d12"/>
+      <stop offset="50%" stop-color="#151a22"/>
+      <stop offset="100%" stop-color="#0a0c11"/>
+    </linearGradient>
+
+    <radialGradient id="glowLeft" cx="20%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2b3a55" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#111722" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#0b0d12" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glowRight" cx="80%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#6b4c14" stop-opacity="0.25"/>
+      <stop offset="60%" stop-color="#1a1408" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#0b0d12" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glowLeft)"/>
+  <rect width="1200" height="630" fill="url(#glowRight)"/>
+
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle"
+        font-family="Inter, Poppins, Arial, sans-serif"
+        font-size="80" font-weight="700" filter="url(#shadow)">
+    <tspan fill="#f6e7b8">Philosopher</tspan>
+    <tspan fill="#f0a61a"> Ai</tspan>
+  </text>
+</svg>

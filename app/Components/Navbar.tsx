@@ -5,6 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import { User, ChevronDown, LogOut } from "lucide-react";
 import axios from "axios";
 import ThemeLoader from "./ThemeLoader";
+import BrandLogo from "./BrandLogo";
 
 type CustomAuthState = {
   checked: boolean;
@@ -133,13 +134,10 @@ function Navbar() {
       <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
         {/* Brand */}
         <h1
-          className="cursor-pointer select-none text-lg font-bold tracking-tight sm:text-xl"
+          className="cursor-pointer select-none"
           onClick={() => navigateTo(brandHref)}
         >
-          <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
-            Philosopher
-          </span>{" "}
-          AI
+          <BrandLogo />
         </h1>
 
         {isAuthed ? (

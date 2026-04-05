@@ -11,7 +11,7 @@ const baseOptions = {
 export function setAuthCookies(
   res: NextResponse,
   accessToken: string,
-  refreshToken?: string
+  refreshToken?: string,
 ) {
   res.cookies.set("accessToken", accessToken, {
     ...baseOptions,

@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   title: "Philosopher AI",
   description:
     "Speak with history's greatest philosophers through a modern AI chat experience.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   alternates: {
     canonical: "/",
   },
@@ -28,10 +33,10 @@ export const metadata: Metadata = {
     siteName: "Philosopher AI",
     images: [
       {
-        url: "/Preview.png",
+        url: "/og-logo.svg",
         width: 1200,
         height: 630,
-        alt: "PhilosophyAI preview image",
+        alt: "Philosopher AI social preview",
       },
     ],
     locale: "en_US",
@@ -41,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Philosopher AI",
     description: "Explore the minds of history's greatest thinkers.",
-    images: ["/Preview.png"],
+    images: ["/og-logo.svg"],
   },
 };
 
