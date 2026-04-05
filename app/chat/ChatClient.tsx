@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
-import axios from "axios";
+import { clientApi, requestWithRefresh } from "@/lib/clientApi";
 import { User, Menu, X, Send, ArrowLeft, ArrowUpRight } from "lucide-react";
 
 type Philosopher = {
@@ -86,7 +86,7 @@ function ChatClient() {
   //   return distanceFromBottom < 120;
   // };
 
-  const fetchWithRefresh = async (input: RequestInfo, init?: RequestInit) => {
+  const streamWithRefresh = async (input: RequestInfo, init?: RequestInit) => {
     const response = await fetch(input, init);
     if (response.status !== 401 && response.status !== 403) {
       return response;
@@ -109,21 +109,20 @@ function ChatClient() {
     }
 
     try {
-      const response = await fetchWithRefresh("/api/chat/history", {
+      const response = await requestWithRefresh<{
+        hasMore?: boolean;
+        messages?: Array<{
+          content?: string | null;
+          created_at?: string | null;
+          id: number;
+          role: string;
+        }>;
+      }>({
+        url: "/api/chat/history",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ philosopherId, cursor }),
+        data: { philosopherId, cursor },
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to load chat history");
-      }
-
-      const data = await response.json();
-      return data;
+      return response.data;
     } catch (error) {
       console.error("Failed to load chat history", error);
     }
@@ -131,16 +130,11 @@ function ChatClient() {
 
   const loadBillingStatus = async () => {
     try {
-      const response = await fetchWithRefresh("/api/billing/status", {
-        credentials: "include",
+      const response = await requestWithRefresh<BillingStatus>({
+        url: "/api/billing/status",
+        method: "GET",
       });
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data = await response.json();
-      setBillingStatus(data);
+      setBillingStatus(response.data);
     } catch (error) {
       console.error("Failed to load billing status", error);
     }
@@ -151,17 +145,15 @@ function ChatClient() {
 
     try {
       setBillingLoading(action);
-      const response = await fetchWithRefresh(endpoint, {
+      const response = await requestWithRefresh<{ message?: string; url?: string }>({
+        url: endpoint,
         method: "POST",
-        credentials: "include",
       });
-      const data = await response.json();
-
-      if (!response.ok || !data?.url) {
-        throw new Error(data?.message || "Billing request failed");
+      if (!response.data?.url) {
+        throw new Error(response.data?.message || "Billing request failed");
       }
 
-      window.location.href = data.url;
+      window.location.href = response.data.url;
     } catch (error) {
       console.error("Failed to open billing flow", error);
       setLimitNotice("Billing is temporarily unavailable. Please try again.");
@@ -187,7 +179,7 @@ function ChatClient() {
     let isActive = true;
     const loadPhilosophers = async () => {
       try {
-        const response = await axios.get("/api/philosophers", {
+        const response = await clientApi.get("/api/philosophers", {
           headers: {
             "Cache-Control": "no-store",
           },
@@ -379,7 +371,7 @@ function ChatClient() {
     setIsStreaming(true);
 
     try {
-      const response = await fetchWithRefresh("/api/chat", {
+      const response = await streamWithRefresh("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -680,12 +672,6 @@ function ChatClient() {
                   ref={messagesContainerRef}
                   onScroll={() => {
                     const container = messagesContainerRef.current;
-                    // if (autoScroll.current) {
-                    //   console.log("programmatic scroll");
-                    //   return;
-                    // }
-                    // console.log("manual scroll");
-                    // autoScroll.current = false;
                     if (!container || isLoadingMore || !hasMoreMessages) {
                       return;
                     }

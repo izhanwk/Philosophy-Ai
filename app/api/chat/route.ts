@@ -6,6 +6,7 @@ import OpenAI from "openai";
 
 export const runtime = "nodejs";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const CONTEXT_MESSAGE_LIMIT = 12;
 
 const wrapSystem = (
   philosopherName: string,
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
       return new Response(
         `Message limit reached for the last 24 hours. Your current plan allows ${dailyLimit} messages per day.`,
         {
-        status: 429,
+          status: 429,
         },
       );
     }
@@ -113,6 +114,28 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
 
+    const recentMessages = await Prisma.chatmessages.findMany({
+      where: { chat_id: chat.id },
+      orderBy: { created_at: "desc" },
+      take: CONTEXT_MESSAGE_LIMIT,
+      select: {
+        role: true,
+        content: true,
+      },
+    });
+
+    const conversationInput = recentMessages
+      .reverse()
+      .filter(
+        (entry) =>
+          (entry.role === "user" || entry.role === "assistant") &&
+          Boolean(entry.content?.trim()),
+      )
+      .map((entry) => ({
+        role: entry.role as "user" | "assistant",
+        content: entry.content,
+      }));
+
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
@@ -123,7 +146,7 @@ export async function POST(req: NextRequest) {
             stream: true,
             input: [
               { role: "system", content: systemInstruction },
-              { role: "user", content: String(message) },
+              ...conversationInput,
             ],
           });
 

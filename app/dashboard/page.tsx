@@ -9,6 +9,8 @@ import { getCurrentUserForPage } from "@/lib/currentUser";
 import { redirect } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 async function DashboardPage() {
   const currentUser = await getCurrentUserForPage();
 
@@ -43,7 +45,8 @@ async function DashboardPage() {
             </span>
           </h1>
           <p className="mt-3 max-w-xl text-base text-zinc-400">
-            Select a thinker from history and begin a conversation shaped by their ideas, era, and philosophy.
+            Select a thinker from history and begin a conversation shaped by
+            their ideas, era, and philosophy.
           </p>
         </div>
 
@@ -70,7 +73,8 @@ async function DashboardPage() {
           <>
             <div className="mb-6 flex items-center justify-between">
               <p className="text-sm text-zinc-500">
-                {philosophers.length} philosopher{philosophers.length !== 1 ? "s" : ""} available
+                {philosophers.length} philosopher
+                {philosophers.length !== 1 ? "s" : ""} available
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

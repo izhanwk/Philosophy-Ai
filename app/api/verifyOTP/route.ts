@@ -11,33 +11,29 @@ export async function POST(req: NextRequest) {
     return Response.json({ message: "Bad request" }, { status: 400 });
   }
 
-  //adding tries
-  const tries = await Prisma.otptries.create({
+  await Prisma.otptries.create({
     data: {
       email: data.email,
       created_at: new Date(),
       password_purpose: false,
     },
   });
-  // Count OTP requests in last 6 hours
+
   const recentRows = await Prisma.$queryRaw<{ count: bigint }[]>`
-    SELECT COUNT(*) as count 
+    SELECT COUNT(*) as count
     FROM otptries
-    WHERE email = ${data.email} 
-    AND created_at >= DATE_SUB(NOW(), INTERVAL 6 HOUR)
+    WHERE email = ${data.email}
+      AND created_at >= DATE_SUB(NOW(), INTERVAL 6 HOUR)
   `;
 
   const recentCount = Number(recentRows?.[0]?.count ?? 0);
-  console.log("Recent Count (including this attempt): ", recentCount);
-
   if (recentCount > 10) {
     return Response.json(
       { error: "Too many OTP requests. Please try again later." },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
-  // Check OTP validity
   const checkOTP = await Prisma.otps.findFirst({
     where: { email: data.email, otp },
   });
@@ -45,17 +41,14 @@ export async function POST(req: NextRequest) {
   if (!checkOTP) {
     return Response.json(
       { message: "Invalid or expired OTP" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
-  // Hash password
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
-  // Delete OTPs for that email
   await Prisma.otps.deleteMany({ where: { email: data.email } });
 
-  // ✔ FIXED: Check if user already exists BEFORE creating
   const existingUser = await Prisma.users.findUnique({
     where: { email: data.email },
   });
@@ -63,13 +56,12 @@ export async function POST(req: NextRequest) {
   if (existingUser) {
     return Response.json(
       { message: "Email already registered. Please login instead." },
-      { status: 409 }
+      { status: 409 },
     );
   }
 
   try {
-    // Create new user
-    const register = await Prisma.users.create({
+    await Prisma.users.create({
       data: {
         email: data.email,
         name: data.name,
@@ -79,20 +71,19 @@ export async function POST(req: NextRequest) {
     });
 
     return Response.json({ message: "Success" }, { status: 200 });
-  } catch (err: any) {
-    console.log("Registration error:", err);
+  } catch (error: any) {
+    console.error("Registration verification failed", error);
 
-    // Prisma duplicate error (just in case)
-    if (err.code === "P2002") {
+    if (error.code === "P2002") {
       return Response.json(
         { message: "This email is already in use." },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     return Response.json(
       { message: "Server error during registration." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

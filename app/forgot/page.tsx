@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import RouteFallback from "../Components/RouteFallback";
 import ForgotClient from "./ForgotClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
   const currentUser = await getCurrentUserForPage();
 

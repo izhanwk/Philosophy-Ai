@@ -2,6 +2,8 @@ import { getCurrentUserForPage } from "@/lib/currentUser";
 import { redirect } from "next/navigation";
 import HomeClient from "./HomeClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const currentUser = await getCurrentUserForPage();
 

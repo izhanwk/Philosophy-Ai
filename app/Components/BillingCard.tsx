@@ -5,6 +5,7 @@ import {
   PRO_DAILY_LIMIT,
   PRO_MONTHLY_PRICE_USD,
 } from "@/lib/billing";
+import { requestWithRefresh } from "@/lib/clientApi";
 import { Check, CreditCard, ShieldCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -47,17 +48,19 @@ export default function BillingCard({
   ) => {
     try {
       setLoadingAction(action);
-      const response = await fetch(endpoint, {
+      const response = await requestWithRefresh<{
+        message?: string;
+        url?: string;
+        method: string;
+      }>({
+        url: endpoint,
         method: "POST",
-        credentials: "include",
       });
-
-      const data = await response.json();
-      if (!response.ok || !data?.url) {
-        throw new Error(data?.message || "Request failed");
+      if (!response.data?.url) {
+        throw new Error(response.data?.message || "Request failed");
       }
 
-      window.location.href = data.url;
+      window.location.href = response.data.url;
     } catch (error) {
       console.error("Billing action failed", error);
       alert("Unable to open billing right now. Please try again.");

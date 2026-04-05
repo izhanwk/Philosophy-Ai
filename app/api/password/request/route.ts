@@ -92,8 +92,7 @@ export async function POST(req: Request) {
         `;
 
     const recentCount = Number(recentRows?.[0]?.count ?? 0);
-    const attemptNumber = recentCount + 1; // include this request
-    console.log("Recent Count (including this attempt): ", attemptNumber);
+    const attemptNumber = recentCount + 1;
     if (attemptNumber > 10) {
       return Response.json(
         { error: "Too many OTP requests. Please try again later." },

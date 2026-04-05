@@ -17,28 +17,22 @@ export async function POST(req: Request) {
       );
     }
 
-    //adding tries
-    const tries = await Prisma.otptries.create({
+    await Prisma.otptries.create({
       data: {
-        email: email,
+        email: normalizedEmail,
         created_at: new Date(),
         password_purpose: true,
       },
     });
 
-    // Count OTP requests in last 6 hours
     const recentRows = await Prisma.$queryRaw<{ count: bigint }[]>`
     SELECT COUNT(*) as count 
     FROM otptries 
-    WHERE email = ${email} AND password_purpose = TRUE 
+    WHERE email = ${normalizedEmail} AND password_purpose = TRUE 
     AND created_at >= DATE_SUB(NOW(), INTERVAL 6 HOUR)
   `;
 
     const recentCount = Number(recentRows?.[0]?.count ?? 0);
-    console.log(
-      "Recent Count (including this attempt in reset): ",
-      recentCount
-    );
 
     if (recentCount > 10) {
       return Response.json(

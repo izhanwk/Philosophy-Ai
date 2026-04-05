@@ -1,29 +1,24 @@
-// server.js
 import { createServer } from "http";
 import { Server } from "socket.io";
 
 const httpServer = createServer();
 
+const allowedOrigins = [
+  process.env.APP_URL,
+  "http://localhost:3000",
+].filter(Boolean);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: ["https://mern-fitness-app-one.vercel.app", "http://localhost:3000"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
 });
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
-  socket.on("message", (msg) => {
-    console.log(msg);
-    io.emit("message", msg);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
+  socket.on("message", (message) => {
+    io.emit("message", message);
   });
 });
 
-httpServer.listen(3001, () => {
-  console.log("Socket server running on 3001");
-});
+httpServer.listen(3001);

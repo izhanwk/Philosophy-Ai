@@ -24,11 +24,6 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUserFromRequest(req);
 
     if (!user) {
-      console.warn("[billing] checkout: unauthorized request", {
-        origin: req.headers.get("origin"),
-        host: req.headers.get("host"),
-        cookiePresent: Boolean(req.headers.get("cookie")),
-      });
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -90,14 +85,6 @@ export async function POST(req: NextRequest) {
     if (!url) {
       throw new Error("Checkout URL missing from Lemon Squeezy response");
     }
-
-    console.info("[billing] Lemon checkout created", {
-      url,
-      storeId,
-      variantId,
-      testMode,
-      userId: user.idusers,
-    });
 
     return NextResponse.json({ url }, { status: 200 });
   } catch (error) {

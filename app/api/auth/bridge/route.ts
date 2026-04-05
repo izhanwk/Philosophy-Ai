@@ -11,29 +11,14 @@ function redirectTo(req: NextRequest, path: string) {
 }
 
 export async function GET(req: NextRequest) {
-  console.log("start");
   const nextAuthSecret = process.env.AUTH_SECRET;
   const accessSecret = process.env.JWT_SECRET;
   const refreshSecret = process.env.REFRESH_JWT_SECRET;
 
   if (!nextAuthSecret || !accessSecret || !refreshSecret) {
-    console.log("Missing auth secrets for Google login bridge");
     return redirectTo(req, "/login?error=auth_config");
   }
 
-  // console.log("our secret : ", nextAuthSecret);
-  // try {
-  //   const token = await getToken({
-  //     req,
-  //     secret: process.env.AUTH_SECRET,
-  //     secureCookie: process.env.NODE_ENV === "production",
-  //   });
-
-  //   console.log("token decoded:", token);
-  //   console.log("auth secret exists:", !!process.env.AUTH_SECRET);
-  // } catch (e) {
-  //   console.error("getToken error:", e);
-  // }
   const session = await getToken({
     req,
     secret: nextAuthSecret,
@@ -45,7 +30,6 @@ export async function GET(req: NextRequest) {
   const sessionSub = typeof session?.sub === "string" ? session.email : null;
 
   if (!sessionEmail && !sessionSub) {
-    console.log("no session");
     return redirectTo(req, "/login?error=missing_session");
   }
 
@@ -56,11 +40,9 @@ export async function GET(req: NextRequest) {
     }));
 
   if (!user) {
-    console.log("Google bridge could not find user for session email");
     return redirectTo(req, "/login");
   }
 
-  console.log("user exist here in this");
   const accessToken = jwt.sign(
     { userId: user.idusers, email: user.email },
     accessSecret,
@@ -74,6 +56,5 @@ export async function GET(req: NextRequest) {
 
   const response = redirectTo(req, "/dashboard");
   setAuthCookies(response, accessToken, refreshToken);
-  console.log("cookies has been set");
   return response;
 }
