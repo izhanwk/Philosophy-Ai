@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 
 const siteUrl: string = "https://philosophy-ai-1bpi.vercel.app";
 
+const imageUrl: string =
+  "https://philosophy-ai-1bpi.vercel.app/opengraph-image";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Philosopher AI",
@@ -35,7 +38,7 @@ export const metadata: Metadata = {
     siteName: "Philosopher AI",
     images: [
       {
-        url: "/opengraph-image",
+        url: imageUrl,
         width: 1200,
         height: 630,
         alt: "Philosopher AI social preview",
@@ -48,7 +51,14 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Philosopher AI",
     description: "Explore the minds of history's greatest thinkers.",
-    images: ["/opengraph-image"],
+    images: [
+      {
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: "Philosopher AI social preview",
+      },
+    ],
   },
 };
 
