@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL;
+const siteUrl: string = "https://philosophy-ai-1bpi.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
