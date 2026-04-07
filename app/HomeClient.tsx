@@ -7,13 +7,18 @@ import { Sparkles, BookOpen, MessageCircle } from "lucide-react";
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
 import GoogleLogo from "./Components/Google";
+import type { NavbarAuthSnapshot } from "./Components/navbarAuth";
 
 const handleScroll = (id: string): void => {
   const element = document.getElementById(id);
   if (element) element.scrollIntoView({ behavior: "smooth" });
 };
 
-export default function HomeClient() {
+export default function HomeClient({
+  navbarAuth,
+}: {
+  navbarAuth: NavbarAuthSnapshot;
+}) {
   const features = [
     {
       icon: <MessageCircle className="h-5 w-5 text-amber-300" />,
@@ -34,7 +39,7 @@ export default function HomeClient() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.06)_0%,_transparent_55%),linear-gradient(to_bottom_right,#18181b,#09090b)] text-white">
-      <Navbar />
+      <Navbar initialAuth={navbarAuth} />
 
       {/* Hero */}
       <div className="flex-1 px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
@@ -62,7 +67,9 @@ export default function HomeClient() {
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
               <button
                 className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/15 bg-white px-5 py-3 text-sm font-semibold text-black shadow-md transition hover:bg-gray-100 active:scale-95"
-                onClick={() => signIn("google", { callbackUrl: "/api/auth/bridge" })}
+                onClick={() =>
+                  signIn("google", { callbackUrl: "/api/auth/bridge" })
+                }
               >
                 <GoogleLogo />
                 Continue with Google
@@ -86,7 +93,9 @@ export default function HomeClient() {
                     {item.icon}
                     <h3 className="text-sm font-semibold">{item.title}</h3>
                   </div>
-                  <p className="mt-2 text-xs leading-relaxed text-zinc-500">{item.desc}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+                    {item.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -95,7 +104,13 @@ export default function HomeClient() {
           {/* Hero image */}
           <div className="relative mx-auto flex max-w-sm flex-col items-center">
             <div className="relative h-40 w-40 overflow-hidden rounded-full border border-amber-300/15 bg-amber-300/5 shadow-[0_0_60px_-12px_rgba(251,191,36,0.2)] sm:h-52 sm:w-52 lg:h-56 lg:w-56">
-              <Image src="/Alghazali.png" alt="Al-Ghazali" fill className="object-cover" priority />
+              <Image
+                src="/Alghazali.png"
+                alt="Al-Ghazali"
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
           </div>
         </section>
@@ -150,7 +165,9 @@ export default function HomeClient() {
                     </div>
                     <div className="space-y-0.5">
                       <h3 className="text-sm font-semibold">{item.title}</h3>
-                      <p className="text-xs leading-relaxed text-zinc-500">{item.desc}</p>
+                      <p className="text-xs leading-relaxed text-zinc-500">
+                        {item.desc}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -159,7 +176,12 @@ export default function HomeClient() {
 
             <div className="relative mx-auto flex items-center justify-center">
               <div className="relative h-52 w-52 overflow-hidden rounded-2xl border border-amber-300/15 bg-amber-300/5 shadow-[0_0_50px_-15px_rgba(251,191,36,0.15)] sm:h-60 sm:w-60 md:h-64 md:w-64">
-                <Image src="/Aristotle.png" alt="Aristotle" fill className="object-cover" />
+                <Image
+                  src="/Aristotle.png"
+                  alt="Aristotle"
+                  fill
+                  className="object-cover"
+                />
               </div>
             </div>
           </div>

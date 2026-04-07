@@ -1,40 +1,30 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { User, ChevronDown, LogOut } from "lucide-react";
 import axios from "axios";
 import ThemeLoader from "./ThemeLoader";
 import BrandLogo from "./BrandLogo";
+import type { NavbarAuthSnapshot } from "./navbarAuth";
 
-type CustomAuthState = {
-  checked: boolean;
-  authed: boolean;
-  email: string;
-};
-
-function Navbar() {
-  const { status, data } = useSession();
+function Navbar({ initialAuth }: { initialAuth: NavbarAuthSnapshot }) {
   const router = useRouter();
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [customAuth, setCustomAuth] = useState<CustomAuthState>({
-    checked: false,
-    authed: false,
-    email: "",
-  });
+  const [authState, setAuthState] = useState(initialAuth);
 
-  const sessionEmail =
-    typeof data?.user?.email === "string" ? data.user.email : "";
-  const isSessionAuthed = status === "authenticated";
-  const isCheckingAuth =
-    status === "loading" || (!isSessionAuthed && !customAuth.checked);
-  const isAuthed = isSessionAuthed || customAuth.authed || isLoggingOut;
-  const email = sessionEmail || customAuth.email;
-  const showLoader = isCheckingAuth || isNavigating || isLoggingOut;
+  useEffect(() => {
+    setAuthState(initialAuth);
+  }, [initialAuth]);
+
+  const isAuthed = authState.authed || isLoggingOut;
+  const email = authState.email;
+  const showLoader = isNavigating || isLoggingOut;
   const brandHref = isAuthed ? "/dashboard" : "/";
 
   const navigateTo = (href: string) => {
@@ -44,18 +34,6 @@ function Navbar() {
     router.push(href);
   };
 
-  const checkTokenWithRefresh = async () => {
-    try {
-      return await axios.post("/api/checkToken");
-    } catch (error: any) {
-      const status = error?.response?.status;
-      if (status !== 401 && status !== 403) throw error;
-      const refreshResponse = await axios.post("/api/refresh");
-      if (refreshResponse.status !== 200) throw error;
-      return axios.post("/api/checkToken");
-    }
-  };
-
   const handleLogout = async () => {
     setOpen(false);
     setIsLoggingOut(true);
@@ -63,49 +41,15 @@ function Navbar() {
       await axios.post("/api/logout").catch(() => {});
       await signOut({ redirect: false });
     } finally {
-      setCustomAuth({ checked: true, authed: false, email: "" });
+      setAuthState({ authed: false, email: "" });
       router.replace("/");
     }
   };
 
   useEffect(() => {
-    if (status === "loading") return;
-    if (isSessionAuthed) {
-      setCustomAuth((current) =>
-        current.checked || current.authed || current.email
-          ? { checked: true, authed: false, email: "" }
-          : current,
-      );
-      return;
-    }
-    let cancelled = false;
-    const checkToken = async () => {
-      try {
-        const response = await checkTokenWithRefresh();
-        if (!cancelled) {
-          setCustomAuth({
-            checked: true,
-            authed: true,
-            email:
-              typeof response.data?.message === "string"
-                ? response.data.message
-                : "",
-          });
-        }
-      } catch {
-        if (!cancelled) {
-          setCustomAuth({ checked: true, authed: false, email: "" });
-        }
-      }
-    };
-    checkToken();
-    return () => { cancelled = true; };
-  }, [isSessionAuthed, status]);
-
-  useEffect(() => {
-    if (!path || status === "loading" || isLoggingOut) return;
+    if (!path || isLoggingOut) return;
     setIsNavigating(false);
-  }, [isLoggingOut, path, status]);
+  }, [isLoggingOut, path]);
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
@@ -124,15 +68,12 @@ function Navbar() {
           label={
             isLoggingOut
               ? "Closing the dialogue..."
-              : isCheckingAuth
-                ? "Checking your access..."
-                : "Opening the next page..."
+              : "Opening the next page..."
           }
         />
       )}
 
       <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
-        {/* Brand */}
         <h1
           className="cursor-pointer select-none"
           onClick={() => navigateTo(brandHref)}
@@ -151,7 +92,9 @@ function Navbar() {
                 <User className="h-4 w-4" />
               </span>
               <div className="flex flex-col text-left">
-                <span className="text-xs font-semibold text-white truncate max-w-[140px]">{email}</span>
+                <span className="max-w-[140px] truncate text-xs font-semibold text-white">
+                  {email}
+                </span>
                 <span className="text-[10px] text-zinc-500">Logged in</span>
               </div>
               <ChevronDown
@@ -190,7 +133,6 @@ function Navbar() {
         )}
       </nav>
 
-      {/* Subtle divider */}
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
       </div>

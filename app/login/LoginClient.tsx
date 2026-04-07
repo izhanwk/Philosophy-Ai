@@ -8,8 +8,13 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Alert } from "../Components/Alert";
 import { signIn } from "next-auth/react";
+import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
 
-export default function LoginClient() {
+export default function LoginClient({
+  navbarAuth,
+}: {
+  navbarAuth: NavbarAuthSnapshot;
+}) {
   const [alertInfo, setAlertInfo] = useState<{
     message: string;
     variant?: "success" | "error" | "warning" | "info";
@@ -43,7 +48,7 @@ export default function LoginClient() {
 
   return (
     <main className="flex min-h-screen flex-col bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_55%),linear-gradient(to_bottom_right,#18181b,#09090b)] text-white">
-      <Navbar />
+      <Navbar initialAuth={navbarAuth} />
 
       {alertInfo && (
         <div className="mx-auto w-full max-w-md px-4 pt-4 sm:max-w-lg">

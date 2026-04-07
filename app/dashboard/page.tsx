@@ -30,7 +30,7 @@ async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_60%),linear-gradient(to_bottom_right,_#18181b,_#09090b)] text-white">
-      <Navbar />
+      <Navbar initialAuth={{ authed: true, email: currentUser.email }} />
 
       {/* Page header */}
       <section className="mx-auto w-full max-w-6xl px-6 pt-12 pb-2">

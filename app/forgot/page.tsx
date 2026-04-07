@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import RouteFallback from "../Components/RouteFallback";
 import ForgotClient from "./ForgotClient";
+import { guestNavbarAuth } from "../Components/navbarAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function Page() {
 
   return (
     <Suspense fallback={<RouteFallback label="Opening account recovery..." />}>
-      <ForgotClient />
+      <ForgotClient navbarAuth={guestNavbarAuth} />
     </Suspense>
   );
 }

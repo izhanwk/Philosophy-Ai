@@ -12,6 +12,7 @@ import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import { clientApi, requestWithRefresh } from "@/lib/clientApi";
 import { User, Menu, X, Send, ArrowLeft, ArrowUpRight } from "lucide-react";
+import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
 
 type Philosopher = {
   id: string | number;
@@ -37,7 +38,7 @@ type BillingStatus = {
   proMonthlyPriceUsd: number;
 };
 
-function ChatClient() {
+function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
   const [philosophers, setPhilosophers] = useState<Philosopher[]>([]);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
@@ -49,10 +50,12 @@ function ChatClient() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [oldestCursor, setOldestCursor] = useState<string | null>(null);
-  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
-  const [billingLoading, setBillingLoading] = useState<"checkout" | "portal" | null>(
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(
     null,
   );
+  const [billingLoading, setBillingLoading] = useState<
+    "checkout" | "portal" | null
+  >(null);
   const [limitNotice, setLimitNotice] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [glow, setGlow] = useState(false);
@@ -140,12 +143,17 @@ function ChatClient() {
     }
   };
 
-  const openBilling = async (endpoint: "/api/billing/checkout" | "/api/billing/portal") => {
+  const openBilling = async (
+    endpoint: "/api/billing/checkout" | "/api/billing/portal",
+  ) => {
     const action = endpoint.includes("portal") ? "portal" : "checkout";
 
     try {
       setBillingLoading(action);
-      const response = await requestWithRefresh<{ message?: string; url?: string }>({
+      const response = await requestWithRefresh<{
+        message?: string;
+        url?: string;
+      }>({
         url: endpoint,
         method: "POST",
       });
@@ -218,13 +226,8 @@ function ChatClient() {
       scrollMessagesToBottom(isStreaming ? "smooth" : "auto");
     });
 
-    const animationTimeOut = setTimeout(() => {
-      shouldSnapToBottomRef.current = true;
-    }, 500);
-
     return () => {
       cancelAnimationFrame(animationId);
-      clearTimeout(animationTimeOut);
     };
   }, [chatMessages, isStreaming]);
 
@@ -355,7 +358,7 @@ function ChatClient() {
       id: assistantMessageId,
       sender: activePhilosopher.id,
       text: "",
-      time: formatTime(now),
+      time: "",
     };
     setChatMessages((prev) => [...prev, userMessage, assistantMessage]);
     setBillingStatus((prev) =>
@@ -419,6 +422,13 @@ function ChatClient() {
           );
         }
       }
+      setChatMessages((prev) =>
+        prev.map((entry) =>
+          entry.id === assistantMessageId
+            ? { ...entry, time: formatTime(now) }
+            : entry,
+        ),
+      );
     } catch (error) {
       console.error("Failed to stream chat response", error);
       setChatMessages((prev) =>
@@ -439,7 +449,7 @@ function ChatClient() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_60%),linear-gradient(to_bottom_right,_#18181b,_#09090b)] text-white flex flex-col">
-      <Navbar />
+      <Navbar initialAuth={navbarAuth} />
       <section className="flex-1">
         <div className="mx-auto w-full max-w-6xl flex flex-col gap-4 px-3 py-4 sm:px-4 sm:py-6 lg:px-8 lg:py-10">
           {/* Mobile Header with Toggle Button */}
@@ -656,7 +666,7 @@ function ChatClient() {
                       </p>
                     </div>
                   </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[10px] text-emerald-300 sm:text-xs">
+                  <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[10px] text-emerald-300 sm:text-xs">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                     <span className="hidden sm:inline">
                       {billingStatus
@@ -749,7 +759,9 @@ function ChatClient() {
                           {billingStatus.plan}
                         </p>
                         <p className="text-xs text-zinc-400 sm:text-sm">
-                          {billingStatus.usedMessagesLast24Hours} of {billingStatus.dailyLimit} messages used in the last 24 hours
+                          {billingStatus.usedMessagesLast24Hours} of{" "}
+                          {billingStatus.dailyLimit} messages used in the last
+                          24 hours
                         </p>
                       </div>
                       <button

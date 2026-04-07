@@ -8,6 +8,7 @@ import axios from "axios";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Alert } from "../Components/Alert";
+import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
 
 interface RegisterFormData {
   name: string;
@@ -16,7 +17,11 @@ interface RegisterFormData {
   confirmPassword: string;
 }
 
-export default function SignupClient() {
+export default function SignupClient({
+  navbarAuth,
+}: {
+  navbarAuth: NavbarAuthSnapshot;
+}) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string>("");
   const [isSending, setIsSending] = useState<boolean>(false);
@@ -53,7 +58,7 @@ export default function SignupClient() {
 
   return (
     <main className="flex min-h-screen flex-col bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_55%),linear-gradient(to_bottom_right,#18181b,#09090b)] text-white">
-      <Navbar />
+      <Navbar initialAuth={navbarAuth} />
 
       {submitError && (
         <div className="mx-auto w-full max-w-md px-4 pt-4 sm:max-w-lg">

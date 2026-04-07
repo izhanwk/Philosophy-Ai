@@ -5,13 +5,18 @@ import Footer from "../Components/Footer";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert } from "../Components/Alert";
+import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
 
 type AlertInfo = {
   message: string;
   variant?: "success" | "error" | "warning" | "info";
 };
 
-export default function ResetPasswordPage() {
+export default function ResetPasswordPage({
+  navbarAuth,
+}: {
+  navbarAuth: NavbarAuthSnapshot;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState<string | null>(null);
@@ -36,10 +41,6 @@ export default function ResetPasswordPage() {
       typeof window !== "undefined"
         ? sessionStorage.getItem("resetGuard")
         : null;
-    const storedEmail =
-      typeof window !== "undefined"
-        ? sessionStorage.getItem("resetEmail")
-        : null;
 
     if (
       !guardFromUrl ||
@@ -49,6 +50,11 @@ export default function ResetPasswordPage() {
       router.push("/login");
       return;
     }
+
+    const storedEmail =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem("resetEmail")
+        : null;
 
     if (!storedEmail) {
       router.push("/login");
@@ -80,7 +86,7 @@ export default function ResetPasswordPage() {
 
   const handleKeyDown = (
     index: number,
-    e: React.KeyboardEvent<HTMLInputElement>
+    e: React.KeyboardEvent<HTMLInputElement>,
   ): void => {
     if (e.key === "Backspace") {
       e.preventDefault();
@@ -212,7 +218,7 @@ export default function ResetPasswordPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_60%),linear-gradient(to_bottom_right,_#18181b,_#09090b)] text-white flex flex-col">
-      <Navbar />
+      <Navbar initialAuth={navbarAuth} />
 
       {alertInfo && (
         <div className="mx-auto mt-4 w-full max-w-5xl px-4 sm:px-6">

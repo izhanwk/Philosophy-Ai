@@ -15,7 +15,9 @@ export default async function Page() {
 
   return (
     <Suspense fallback={<RouteFallback label="Opening the dialogue room..." />}>
-      <ChatClient />
+      <ChatClient
+        navbarAuth={{ authed: true, email: currentUser.email }}
+      />
     </Suspense>
   );
 }

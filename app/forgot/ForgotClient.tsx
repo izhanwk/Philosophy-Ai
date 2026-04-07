@@ -8,12 +8,17 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Alert } from "../Components/Alert";
 import { useSearchParams } from "next/navigation";
+import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
 
 type ForgotForm = {
   email: string;
 };
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordPage({
+  navbarAuth,
+}: {
+  navbarAuth: NavbarAuthSnapshot;
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -69,6 +74,7 @@ export default function ForgotPasswordPage() {
           variant: "error",
           message: "Too many otp requests. Try again later",
         });
+        return;
       }
       const apiMessage =
         err?.response?.data?.error || "Failed to send reset code. Try again.";
@@ -80,7 +86,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_60%),linear-gradient(to_bottom_right,_#18181b,_#09090b)] text-white flex flex-col">
-      <Navbar />
+      <Navbar initialAuth={navbarAuth} />
 
       {alertInfo && (
         <div className="mx-auto mt-4 w-full max-w-5xl px-4 sm:px-6">
@@ -134,7 +140,11 @@ export default function ForgotPasswordPage() {
 
                   <input
                     type="email"
-                    className="w-full rounded-2xl border border-zinc-700/80 bg-zinc-950/70 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-zinc-500 focus:border-amber-400/50 focus:ring-2 focus:ring-amber-300/15 sm:px-5 sm:py-4 sm:text-base"
+                    className={`w-full rounded-2xl border bg-zinc-950/70 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-zinc-500 sm:px-5 sm:py-4 sm:text-base ${
+                      errors.email || alertInfo?.variant === "error"
+                        ? "border-red-500/80 focus:border-red-400 focus:ring-2 focus:ring-red-400/15"
+                        : "border-zinc-700/80 focus:border-amber-400/50 focus:ring-2 focus:ring-amber-300/15"
+                    }`}
                     placeholder="you@example.com"
                     {...register("email", {
                       required: "Email is required",

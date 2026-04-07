@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import HomeClient from "../HomeClient";
+import { guestNavbarAuth } from "../Components/navbarAuth";
 
 const signInMock = jest.fn();
 const scrollIntoViewMock = jest.fn();
@@ -28,7 +29,7 @@ describe("HomeClient", () => {
   it("starts the Google sign-in flow with the bridge callback", async () => {
     const user = userEvent.setup();
 
-    render(<HomeClient />);
+    render(<HomeClient navbarAuth={guestNavbarAuth} />);
 
     await user.click(
       screen.getByRole("button", { name: /continue with google/i }),
@@ -46,7 +47,7 @@ describe("HomeClient", () => {
     aboutSection.scrollIntoView = scrollIntoViewMock;
     document.body.appendChild(aboutSection);
 
-    render(<HomeClient />);
+    render(<HomeClient navbarAuth={guestNavbarAuth} />);
 
     await user.click(screen.getByRole("button", { name: /learn more/i }));
 

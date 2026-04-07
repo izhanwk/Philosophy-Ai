@@ -5,6 +5,7 @@ import Footer from "../Components/Footer";
 import axios from "axios";
 import { Alert } from "../Components/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
 
 type RegistrationData = {
   name: string;
@@ -12,7 +13,11 @@ type RegistrationData = {
   password: string;
 };
 
-export default function OTPVerificationPage() {
+export default function OTPVerificationPage({
+  navbarAuth,
+}: {
+  navbarAuth: NavbarAuthSnapshot;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
@@ -167,7 +172,7 @@ export default function OTPVerificationPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.05)_0%,_transparent_55%),linear-gradient(to_bottom_right,#18181b,#09090b)] text-white">
-      <Navbar />
+      <Navbar initialAuth={navbarAuth} />
 
       {errorBox && <div className="mx-auto w-full max-w-sm px-4 pt-4"><Alert variant="error" title="Verification failed" message={message} /></div>}
 
