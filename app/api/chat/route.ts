@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     // Fix 1: Run all independent queries in parallel
     let [philosopher, chat, userMessageCount] = await Promise.all([
-      getPhilosopher(Number(philosopherId)), // Fix 3: uses cache
+      getPhilosopher(Number(philosopherId)), // uses cache
       Prisma.chats.findFirst({
         where: { user_id: userId, philosopher_id: Number(philosopherId) },
         select: { id: true },
@@ -115,11 +115,8 @@ export async function POST(req: NextRequest) {
     });
 
     // Fix 2: Fire and forget — don't block stream on user message insert
-    Prisma.chatmessages.create({
-      data: { chat_id: chat.id, role: "user", content: String(message) },
-    });
-
-    // Fix 2: Append current message in memory instead of waiting for DB
+    // Keep the current message in memory first so failed generations do not
+    // consume quota by persisting a counted "user" message prematurely.
     const conversationInput = [
       ...recentMessages
         .reverse()
@@ -163,15 +160,28 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // Save assistant message after stream completes
-          await Prisma.chatmessages.create({
-            data: {
-              chat_id: chat.id,
-              role: "assistant",
-              content: assistantBody,
-            },
-            select: { id: true },
-          });
+          const trimmedAssistantBody = assistantBody.trim();
+          if (!trimmedAssistantBody) {
+            throw new Error("Assistant returned an empty response");
+          }
+
+          // Persist both sides only after a successful completion.
+          await Prisma.$transaction([
+            Prisma.chatmessages.create({
+              data: {
+                chat_id: chat.id,
+                role: "user",
+                content: String(message),
+              },
+            }),
+            Prisma.chatmessages.create({
+              data: {
+                chat_id: chat.id,
+                role: "assistant",
+                content: trimmedAssistantBody,
+              },
+            }),
+          ]);
 
           controller.close();
         } catch (error) {
