@@ -66,6 +66,7 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
     container: HTMLDivElement | null;
     previousScrollHeight: number;
     previousScrollTop: number;
+    pending: boolean;
   } | null>(null);
 
   const formatTime = (date: Date) => {
@@ -81,13 +82,6 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
     }
     container.scrollTo({ top: container.scrollHeight, behavior });
   };
-
-  // const isNearBottom = (container: HTMLDivElement) => {
-  //   const distanceFromBottom =
-  //     container.scrollHeight - container.scrollTop - container.clientHeight;
-
-  //   return distanceFromBottom < 120;
-  // };
 
   const streamWithRefresh = async (input: RequestInfo, init?: RequestInit) => {
     const response = await fetch(input, init);
@@ -217,19 +211,25 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
   }, []);
 
   useLayoutEffect(() => {
+    const loadOlderState = loadOlderStateRef.current;
+    if (loadOlderState?.container && loadOlderState.pending) {
+      const { container, previousScrollHeight, previousScrollTop } =
+        loadOlderState;
+      const nextScrollTop =
+        previousScrollTop + (container.scrollHeight - previousScrollHeight);
+
+      container.scrollTop = nextScrollTop;
+      loadOlderStateRef.current = null;
+      return;
+    }
+
     if (!shouldSnapToBottomRef.current) {
       return;
     }
 
     shouldSnapToBottomRef.current = false;
-    const animationId = requestAnimationFrame(() => {
-      scrollMessagesToBottom(isStreaming ? "smooth" : "auto");
-    });
-
-    return () => {
-      cancelAnimationFrame(animationId);
-    };
-  }, [chatMessages, isStreaming]);
+    scrollMessagesToBottom(isStreaming ? "smooth" : "auto");
+  }, [chatMessages, isStreaming, isLoadingMore]);
 
   const activePhilosopher = useMemo(() => {
     return (
@@ -288,6 +288,7 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
       container,
       previousScrollHeight: container?.scrollHeight ?? 0,
       previousScrollTop: container?.scrollTop ?? 0,
+      pending: false,
     };
 
     setIsLoadingMore(true);
@@ -310,28 +311,13 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
     setHasMoreMessages(Boolean(data?.hasMore));
     if (mapped.length) {
       setOldestCursor(mapped[0].createdAt ?? oldestCursor);
+      if (loadOlderStateRef.current) {
+        loadOlderStateRef.current.pending = true;
+      }
     }
 
     setIsLoadingMore(false);
   };
-
-  useEffect(() => {
-    const loadOlderState = loadOlderStateRef.current;
-    if (!loadOlderState?.container) {
-      return;
-    }
-
-    const { container, previousScrollHeight, previousScrollTop } =
-      loadOlderState;
-    const newScrollHeight = container.scrollHeight;
-    const target = newScrollHeight - previousScrollHeight + previousScrollTop;
-
-    container.scrollTo({
-      top: target,
-      behavior: "smooth",
-    });
-    loadOlderStateRef.current = null;
-  }, [chatMessages]);
 
   useEffect(() => {
     loadInitialMessages();
@@ -682,7 +668,11 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
                   ref={messagesContainerRef}
                   onScroll={() => {
                     const container = messagesContainerRef.current;
-                    if (!container || isLoadingMore || !hasMoreMessages) {
+                    if (!container) {
+                      return;
+                    }
+
+                    if (isLoadingMore || !hasMoreMessages) {
                       return;
                     }
                     if (container.scrollTop <= 80) {
