@@ -6,6 +6,7 @@ import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert } from "../Components/Alert";
 import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
+import { useRouteTransition } from "../Components/RouteTransitionProvider";
 
 type AlertInfo = {
   message: string;
@@ -18,6 +19,7 @@ export default function ResetPasswordPage({
   navbarAuth: NavbarAuthSnapshot;
 }) {
   const router = useRouter();
+  const { push } = useRouteTransition();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState<string | null>(null);
   const [alertInfo, setAlertInfo] = useState<AlertInfo | null>(null);
@@ -47,7 +49,7 @@ export default function ResetPasswordPage({
       !guardFromSession ||
       guardFromUrl !== guardFromSession
     ) {
-      router.push("/login");
+      push(router, "/login");
       return;
     }
 
@@ -57,12 +59,12 @@ export default function ResetPasswordPage({
         : null;
 
     if (!storedEmail) {
-      router.push("/login");
+      push(router, "/login");
       return;
     }
 
     setEmail(storedEmail);
-  }, [router, searchParams]);
+  }, [push, router, searchParams]);
 
   const handleChange = (index: number, value: string): void => {
     const numericValue = value.replace(/[^0-9]/g, "");
@@ -193,7 +195,7 @@ export default function ResetPasswordPage({
       });
       sessionStorage.removeItem("resetGuard");
       sessionStorage.removeItem("resetEmail");
-      setTimeout(() => router.push("/login"), 1200);
+      setTimeout(() => push(router, "/login"), 1200);
     } catch (err: any) {
       if (err.response.status === 429) {
         setAlertInfo({
@@ -324,7 +326,7 @@ export default function ResetPasswordPage({
 
               <button
                 type="button"
-                onClick={() => router.push("/login")}
+                onClick={() => push(router, "/login")}
                 className="mx-auto mt-4 block text-sm font-medium text-amber-300 transition-colors hover:text-amber-200"
               >
                 Back to login

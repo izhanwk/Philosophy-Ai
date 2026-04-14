@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import { useForm } from "react-hook-form";
@@ -9,6 +8,8 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Alert } from "../Components/Alert";
 import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
+import AppLink from "../Components/AppLink";
+import { useRouteTransition } from "../Components/RouteTransitionProvider";
 
 interface RegisterFormData {
   name: string;
@@ -23,6 +24,7 @@ export default function SignupClient({
   navbarAuth: NavbarAuthSnapshot;
 }) {
   const router = useRouter();
+  const { push } = useRouteTransition();
   const [submitError, setSubmitError] = useState<string>("");
   const [isSending, setIsSending] = useState<boolean>(false);
   const {
@@ -40,7 +42,7 @@ export default function SignupClient({
       localStorage.setItem("Register", JSON.stringify(data));
       const accessGuard = crypto.randomUUID();
       sessionStorage.setItem("otpAccessGuard", accessGuard);
-      router.push(`/otp?guard=${accessGuard}`);
+      push(router, `/otp?guard=${accessGuard}`);
     } catch (err: any) {
       const status = err?.response?.status;
       if (status === 409) {
@@ -173,9 +175,12 @@ export default function SignupClient({
 
             <p className="text-center text-sm text-zinc-500">
               Already have an account?{" "}
-              <Link href="/login" className="font-semibold text-amber-300 transition hover:text-amber-200">
+              <AppLink
+                href="/login"
+                className="font-semibold text-amber-300 transition hover:text-amber-200"
+              >
                 Sign in
-              </Link>
+              </AppLink>
             </p>
 
             <div className="relative">
@@ -204,9 +209,9 @@ export default function SignupClient({
 
           <p className="mt-5 text-center text-xs text-zinc-600">
             By creating an account, you agree to our{" "}
-            <Link href="#" className="text-zinc-500 transition hover:text-zinc-300">Terms</Link>{" "}
+            <AppLink href="#" className="text-zinc-500 transition hover:text-zinc-300">Terms</AppLink>{" "}
             and{" "}
-            <Link href="#" className="text-zinc-500 transition hover:text-zinc-300">Privacy Policy</Link>
+            <AppLink href="#" className="text-zinc-500 transition hover:text-zinc-300">Privacy Policy</AppLink>
           </p>
         </div>
       </div>

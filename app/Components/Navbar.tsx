@@ -5,9 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { User, ChevronDown, LogOut } from "lucide-react";
 import axios from "axios";
-import ThemeLoader from "./ThemeLoader";
 import BrandLogo from "./BrandLogo";
 import type { NavbarAuthSnapshot } from "./navbarAuth";
+import { useRouteTransition } from "./RouteTransitionProvider";
 
 function Navbar({ initialAuth }: { initialAuth: NavbarAuthSnapshot }) {
   const router = useRouter();
@@ -15,8 +15,8 @@ function Navbar({ initialAuth }: { initialAuth: NavbarAuthSnapshot }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
   const [authState, setAuthState] = useState(initialAuth);
+  const { push, replace } = useRouteTransition();
 
   useEffect(() => {
     setAuthState(initialAuth);
@@ -24,14 +24,12 @@ function Navbar({ initialAuth }: { initialAuth: NavbarAuthSnapshot }) {
 
   const isAuthed = authState.authed || isLoggingOut;
   const email = authState.email;
-  const showLoader = isNavigating || isLoggingOut;
   const brandHref = isAuthed ? "/dashboard" : "/";
 
   const navigateTo = (href: string) => {
     if (href === path) return;
     setOpen(false);
-    setIsNavigating(true);
-    router.push(href);
+    push(router, href);
   };
 
   const handleLogout = async () => {
@@ -42,14 +40,9 @@ function Navbar({ initialAuth }: { initialAuth: NavbarAuthSnapshot }) {
       await signOut({ redirect: false });
     } finally {
       setAuthState({ authed: false, email: "" });
-      router.replace("/");
+      replace(router, "/", undefined, "Closing the dialogue...");
     }
   };
-
-  useEffect(() => {
-    if (!path || isLoggingOut) return;
-    setIsNavigating(false);
-  }, [isLoggingOut, path]);
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
@@ -63,16 +56,6 @@ function Navbar({ initialAuth }: { initialAuth: NavbarAuthSnapshot }) {
 
   return (
     <div>
-      {showLoader && (
-        <ThemeLoader
-          label={
-            isLoggingOut
-              ? "Closing the dialogue..."
-              : "Opening the next page..."
-          }
-        />
-      )}
-
       <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
         <h1
           className="cursor-pointer select-none"

@@ -1,2 +1,2 @@
-const obj = { a: 1, b: 2 };
-// console.log(...obj)
+const obj = Object.entries(person);
+console.log(obj);

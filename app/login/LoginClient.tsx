@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import { useForm } from "react-hook-form";
@@ -9,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { Alert } from "../Components/Alert";
 import { signIn } from "next-auth/react";
 import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
+import AppLink from "../Components/AppLink";
+import { useRouteTransition } from "../Components/RouteTransitionProvider";
 
 export default function LoginClient({
   navbarAuth,
@@ -26,12 +27,13 @@ export default function LoginClient({
     reset,
   } = useForm();
   const router = useRouter();
+  const { push } = useRouteTransition();
 
   const onSubmit = async (data: object) => {
     try {
       await axios.post("/api/login", data);
       setAlertInfo(null);
-      router.push("/dashboard");
+      push(router, "/dashboard");
     } catch (error: any) {
       reset();
       if (axios.isAxiosError(error)) {
@@ -94,7 +96,7 @@ export default function LoginClient({
                   onClick={() => {
                     const guard = crypto.randomUUID();
                     sessionStorage.setItem("OTPGuard", guard);
-                    router.push(`/forgot?guard=${guard}`);
+                    push(router, `/forgot?guard=${guard}`);
                   }}
                   className="cursor-pointer text-xs text-amber-300/80 transition hover:text-amber-300"
                 >
@@ -127,9 +129,12 @@ export default function LoginClient({
 
             <p className="text-center text-sm text-zinc-500">
               Don't have an account?{" "}
-              <Link href="/signup" className="font-semibold text-amber-300 transition hover:text-amber-200">
+              <AppLink
+                href="/signup"
+                className="font-semibold text-amber-300 transition hover:text-amber-200"
+              >
                 Sign up
-              </Link>
+              </AppLink>
             </p>
 
             <div className="relative">
@@ -158,9 +163,9 @@ export default function LoginClient({
 
           <p className="mt-5 text-center text-xs text-zinc-600">
             By signing in, you agree to our{" "}
-            <Link href="#" className="text-zinc-500 transition hover:text-zinc-300">Terms</Link>{" "}
+            <AppLink href="#" className="text-zinc-500 transition hover:text-zinc-300">Terms</AppLink>{" "}
             and{" "}
-            <Link href="#" className="text-zinc-500 transition hover:text-zinc-300">Privacy Policy</Link>
+            <AppLink href="#" className="text-zinc-500 transition hover:text-zinc-300">Privacy Policy</AppLink>
           </p>
         </div>
       </div>

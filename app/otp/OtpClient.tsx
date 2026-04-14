@@ -6,6 +6,8 @@ import axios from "axios";
 import { Alert } from "../Components/Alert";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
+import AppLink from "../Components/AppLink";
+import { useRouteTransition } from "../Components/RouteTransitionProvider";
 
 type RegistrationData = {
   name: string;
@@ -19,6 +21,7 @@ export default function OTPVerificationPage({
   navbarAuth: NavbarAuthSnapshot;
 }) {
   const router = useRouter();
+  const { push, replace } = useRouteTransition();
   const searchParams = useSearchParams();
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
 
@@ -49,11 +52,11 @@ export default function OTPVerificationPage({
     const guardFromSession =
       typeof window !== "undefined" ? sessionStorage.getItem("otpAccessGuard") : null;
     if (!guardFromUrl || !guardFromSession || guardFromUrl !== guardFromSession) {
-      router.push("/signup");
+      push(router, "/signup");
       return;
     }
     setIsAuthorized(true);
-  }, [router, searchParams]);
+  }, [push, router, searchParams]);
 
   const handleChange = (index: number, value: string): void => {
     const numericValue = value.replace(/[^0-9]/g, "");
@@ -129,11 +132,11 @@ export default function OTPVerificationPage({
     setSuccess("");
     try {
       if (otpValue.length !== 6) { setError("Please enter a complete 6-digit code"); setIsVerifying(false); return; }
-      if (!registrationData) { setError("Signup data missing. Please sign up again."); router.replace("/signup"); setIsVerifying(false); return; }
+      if (!registrationData) { setError("Signup data missing. Please sign up again."); replace(router, "/signup"); setIsVerifying(false); return; }
       await axios.post("/api/verifyOTP", { otp: otpValue, data: registrationData });
       seterrorBox(false);
       setSuccess("Verified! Redirecting to login...");
-      router.push("/login");
+      push(router, "/login");
     } catch (err: any) {
       setOtpValues(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
@@ -146,7 +149,7 @@ export default function OTPVerificationPage({
   };
 
   const handleResendOTP = async (): Promise<void> => {
-    if (!registrationData) { setError("Signup data missing. Please sign up again."); router.replace("/signup"); return; }
+    if (!registrationData) { setError("Signup data missing. Please sign up again."); replace(router, "/signup"); return; }
     try {
       setError("");
       setSuccess("Resending code...");
@@ -248,7 +251,7 @@ export default function OTPVerificationPage({
             <p className="text-xs text-zinc-600">Didn't receive it? Check your spam folder.</p>
             <p className="text-xs text-zinc-600">
               Wrong email?{" "}
-              <a href="/signup" className="text-amber-300/80 transition hover:text-amber-300">Go back</a>
+              <AppLink href="/signup" className="text-amber-300/80 transition hover:text-amber-300">Go back</AppLink>
             </p>
           </div>
         </div>

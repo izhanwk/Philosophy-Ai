@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import DashboardBillingSection from "./DashboardBillingSection";
@@ -8,6 +7,7 @@ import { Prisma } from "@/lib/prisma";
 import { getCurrentUserForPage } from "@/lib/currentUser";
 import { redirect } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
+import AppLink from "../Components/AppLink";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +79,7 @@ async function DashboardPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {philosophers.map((philosopher: any) => (
-                <Link
+                <AppLink
                   key={philosopher.id}
                   href={`/chat?philosopherId=${philosopher.id}`}
                   className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40 transition-all duration-300 hover:border-amber-400/30 hover:bg-zinc-900/70 hover:shadow-xl hover:shadow-black/40"
@@ -111,7 +111,7 @@ async function DashboardPage() {
 
                   {/* Bottom accent bar on hover */}
                   <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-amber-400/60 to-amber-300/20 transition-all duration-500 group-hover:w-full" />
-                </Link>
+                </AppLink>
               ))}
             </div>
           </>

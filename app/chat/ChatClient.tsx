@@ -6,13 +6,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import { clientApi, requestWithRefresh } from "@/lib/clientApi";
 import { User, Menu, X, Send, ArrowLeft, ArrowUpRight } from "lucide-react";
 import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
+import AppLink from "../Components/AppLink";
 
 type Philosopher = {
   id: string | number;
@@ -487,13 +487,13 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
                   </span>
                 </h1>
               </div>
-              <Link
+              <AppLink
                 href="/dashboard"
                 className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 transition hover:border-amber-400/30 hover:bg-white/10 hover:text-white"
               >
                 <ArrowLeft size={16} />
                 Back to dashboard
-              </Link>
+              </AppLink>
             </div>
             <p className="max-w-2xl text-sm text-zinc-300 sm:text-base">
               Explore timeless questions in a modern chat format. Each voice is
@@ -554,7 +554,7 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
                   {philosophers.map((philosopher) => {
                     const isActive = philosopher.id === activePhilosopher?.id;
                     return (
-                      <Link
+                      <AppLink
                         key={philosopher.id}
                         href={`/chat?philosopherId=${philosopher.id}`}
                         onClick={() => setShowPhilosopherSidebar(false)}
@@ -577,7 +577,7 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
                             {philosopher.description}
                           </p>
                         </div>
-                      </Link>
+                      </AppLink>
                     );
                   })}
                 </div>
@@ -602,7 +602,7 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
                   {philosophers.map((philosopher) => {
                     const isActive = philosopher.id === activePhilosopher?.id;
                     return (
-                      <Link
+                      <AppLink
                         key={philosopher.id}
                         href={`/chat?philosopherId=${philosopher.id}`}
                         className={`group flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${
@@ -627,7 +627,7 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
                         <span className="rounded-full border border-white/10 bg-black/20 p-1.5 text-zinc-500 transition group-hover:border-amber-400/30 group-hover:text-amber-300">
                           <ArrowUpRight size={12} />
                         </span>
-                      </Link>
+                      </AppLink>
                     );
                   })}
                 </div>

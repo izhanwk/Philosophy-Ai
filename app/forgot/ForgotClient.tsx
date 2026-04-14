@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import { useForm } from "react-hook-form";
@@ -9,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { Alert } from "../Components/Alert";
 import { useSearchParams } from "next/navigation";
 import type { NavbarAuthSnapshot } from "../Components/navbarAuth";
+import AppLink from "../Components/AppLink";
+import { useRouteTransition } from "../Components/RouteTransitionProvider";
 
 type ForgotForm = {
   email: string;
@@ -21,6 +22,7 @@ export default function ForgotPasswordPage({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { push } = useRouteTransition();
 
   useEffect(() => {
     const guardFromUrl = searchParams.get("guard");
@@ -32,10 +34,10 @@ export default function ForgotPasswordPage({
       !guardFromSession ||
       guardFromUrl !== guardFromSession
     ) {
-      router.push("/login");
+      push(router, "/login");
       return;
     }
-  }, [router, searchParams]);
+  }, [push, router, searchParams]);
 
   const [alertInfo, setAlertInfo] = useState<{
     message: string;
@@ -59,7 +61,7 @@ export default function ForgotPasswordPage({
       const guard = crypto.randomUUID();
       sessionStorage.setItem("resetGuard", guard);
       sessionStorage.setItem("resetEmail", data.email.toLowerCase().trim());
-      router.push(`/reset?guard=${guard}`);
+      push(router, `/reset?guard=${guard}`);
     } catch (err: any) {
       const status = err?.response?.status;
       if (status === 404) {
@@ -173,12 +175,12 @@ export default function ForgotPasswordPage({
 
                 <div className="text-center text-sm text-zinc-400">
                   Remembered it?{" "}
-                  <Link
+                  <AppLink
                     href="/login"
                     className="font-semibold text-amber-300 transition-colors hover:text-amber-200"
                   >
                     Back to login
-                  </Link>
+                  </AppLink>
                 </div>
               </form>
             </div>
