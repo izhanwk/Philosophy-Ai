@@ -2,7 +2,7 @@
 
 import Link, { LinkProps } from "next/link";
 import React from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useRouteTransition } from "./RouteTransitionProvider";
 
 type AppLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> &
@@ -54,11 +54,8 @@ export default function AppLink({
   ...props
 }: AppLinkProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { startNavigation } = useRouteTransition();
   const resolvedHref = resolveHref(href);
-  const search = searchParams?.toString();
-  const currentHref = search ? `${pathname}?${search}` : pathname;
 
   return (
     <Link
@@ -66,6 +63,7 @@ export default function AppLink({
       {...props}
       onClick={(event) => {
         onClick?.(event);
+        const currentHref = `${window.location.pathname}${window.location.search}`;
         if (
           event.defaultPrevented ||
           isModifiedEvent(event) ||
@@ -77,7 +75,7 @@ export default function AppLink({
           return;
         }
 
-        startNavigation(loadingLabel);
+        startNavigation(loadingLabel, resolvedHref);
       }}
     />
   );

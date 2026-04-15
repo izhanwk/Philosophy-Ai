@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { readAccessToken } from "@/lib/authCookies";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const tokenFromCookie = readAccessToken(req);
   const token = tokenFromCookie;
 
@@ -30,5 +30,4 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: ["/api/token", "/api/chat", "/api/chat/history"],
-  runtime: "nodejs",
 };

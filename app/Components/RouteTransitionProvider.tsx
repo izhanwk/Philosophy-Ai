@@ -12,12 +12,12 @@ import {
   AppRouterInstance,
   NavigateOptions,
 } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import ThemeLoader from "./ThemeLoader";
 
 type RouteTransitionContextValue = {
   isNavigating: boolean;
-  startNavigation: (label?: string) => void;
+  startNavigation: (label?: string, targetHref?: string) => void;
   push: (
     router: AppRouterInstance,
     href: string,
@@ -37,26 +37,50 @@ const DEFAULT_LABEL = "Loading...";
 const RouteTransitionContext =
   createContext<RouteTransitionContextValue | null>(null);
 
+function getCurrentHref() {
+  return `${window.location.pathname}${window.location.search}`;
+}
+
 export function RouteTransitionProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [isNavigating, setIsNavigating] = useState(false);
   const [label, setLabel] = useState(DEFAULT_LABEL);
-  const search = searchParams?.toString() ?? "";
+  const [targetHref, setTargetHref] = useState<string | null>(null);
 
   useEffect(() => {
     setIsNavigating(false);
     setLabel(DEFAULT_LABEL);
-  }, [pathname, search]);
+    setTargetHref(null);
+  }, [pathname]);
 
-  const startNavigation = useCallback((nextLabel = DEFAULT_LABEL) => {
-    setLabel(nextLabel);
-    setIsNavigating(true);
-  }, []);
+  useEffect(() => {
+    if (!isNavigating || !targetHref) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (getCurrentHref() === targetHref) {
+        setIsNavigating(false);
+        setLabel(DEFAULT_LABEL);
+        setTargetHref(null);
+      }
+    }, 100);
+
+    return () => window.clearInterval(intervalId);
+  }, [isNavigating, targetHref]);
+
+  const startNavigation = useCallback(
+    (nextLabel = DEFAULT_LABEL, nextHref?: string) => {
+      setLabel(nextLabel);
+      setTargetHref(nextHref ?? null);
+      setIsNavigating(true);
+    },
+    [],
+  );
 
   const push = useCallback(
     (
@@ -65,7 +89,7 @@ export function RouteTransitionProvider({
       options?: NavigateOptions,
       nextLabel?: string,
     ) => {
-      startNavigation(nextLabel);
+      startNavigation(nextLabel, href);
       router.push(href, options);
     },
     [startNavigation],
@@ -78,7 +102,7 @@ export function RouteTransitionProvider({
       options?: NavigateOptions,
       nextLabel?: string,
     ) => {
-      startNavigation(nextLabel);
+      startNavigation(nextLabel, href);
       router.replace(href, options);
     },
     [startNavigation],
