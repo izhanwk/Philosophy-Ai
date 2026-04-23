@@ -38,6 +38,8 @@ type BillingStatus = {
   proMonthlyPriceUsd: number;
 };
 
+const BILLING_BANNER_DISMISS_KEY = "chat-billing-banner-dismissed";
+
 function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
   const [philosophers, setPhilosophers] = useState<Philosopher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +58,8 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
   const [billingLoading, setBillingLoading] = useState<
     "checkout" | "portal" | null
   >(null);
+  const [isBillingBannerDismissed, setIsBillingBannerDismissed] =
+    useState(false);
   const [limitNotice, setLimitNotice] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [glow, setGlow] = useState(false);
@@ -176,6 +180,17 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
     setGlow(false);
   };
 
+  const dismissBillingBanner = () => {
+    setIsBillingBannerDismissed(true);
+    window.sessionStorage.setItem(BILLING_BANNER_DISMISS_KEY, "true");
+  };
+
+  useEffect(() => {
+    setIsBillingBannerDismissed(
+      window.sessionStorage.getItem(BILLING_BANNER_DISMISS_KEY) === "true",
+    );
+  }, []);
+
   useEffect(() => {
     delay();
     let isActive = true;
@@ -209,6 +224,15 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
       isActive = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!billingStatus?.hasActiveSubscription) {
+      return;
+    }
+
+    setIsBillingBannerDismissed(false);
+    window.sessionStorage.removeItem(BILLING_BANNER_DISMISS_KEY);
+  }, [billingStatus]);
 
   useLayoutEffect(() => {
     const loadOlderState = loadOlderStateRef.current;
@@ -742,7 +766,9 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
 
                 {/* Input Area */}
                 <div className="border-t border-white/10 px-3 py-2.5 sm:px-4 sm:py-3 lg:px-6 lg:py-4">
-                  {billingStatus ? (
+                  {billingStatus &&
+                  (billingStatus.hasActiveSubscription ||
+                    !isBillingBannerDismissed) ? (
                     <div className="mb-3 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-200 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-medium text-white">
@@ -754,25 +780,37 @@ function ChatClient({ navbarAuth }: { navbarAuth: NavbarAuthSnapshot }) {
                           24 hours
                         </p>
                       </div>
-                      <button
-                        onClick={() =>
-                          openBilling(
-                            billingStatus.hasActiveSubscription
-                              ? "/api/billing/portal"
-                              : "/api/billing/checkout",
-                          )
-                        }
-                        disabled={billingLoading !== null}
-                        className="inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {billingLoading === "checkout"
-                          ? "Opening checkout..."
-                          : billingLoading === "portal"
-                            ? "Opening billing..."
-                            : billingStatus.hasActiveSubscription
-                              ? "Manage plan"
-                              : `Upgrade to ${billingStatus.dailyLimit === 100 ? "Pro" : "100/day"} for $${billingStatus.proMonthlyPriceUsd}/mo`}
-                      </button>
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        <button
+                          onClick={() =>
+                            openBilling(
+                              billingStatus.hasActiveSubscription
+                                ? "/api/billing/portal"
+                                : "/api/billing/checkout",
+                            )
+                          }
+                          disabled={billingLoading !== null}
+                          className="cursor-pointer inline-flex items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {billingLoading === "checkout"
+                            ? "Opening checkout..."
+                            : billingLoading === "portal"
+                              ? "Opening billing..."
+                              : billingStatus.hasActiveSubscription
+                                ? "Manage plan"
+                                : `Upgrade to ${billingStatus.dailyLimit === 100 ? "Pro" : "100/day"} for $${billingStatus.proMonthlyPriceUsd}/mo`}
+                        </button>
+                        {!billingStatus.hasActiveSubscription ? (
+                          <button
+                            type="button"
+                            onClick={dismissBillingBanner}
+                            className="inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-400 transition hover:bg-white/10 hover:text-white"
+                            aria-label="Hide upgrade banner"
+                          >
+                            <X size={16} />
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
 
