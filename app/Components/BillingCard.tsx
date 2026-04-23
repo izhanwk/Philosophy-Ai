@@ -127,7 +127,7 @@ export default function BillingCard({
                   openBillingUrl("/api/billing/checkout", "checkout")
                 }
                 disabled={loadingAction !== null}
-                className="inline-flex items-center justify-center rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="cursor-pointer inline-flex items-center justify-center rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loadingAction === "checkout"
                   ? "Opening secure checkout..."

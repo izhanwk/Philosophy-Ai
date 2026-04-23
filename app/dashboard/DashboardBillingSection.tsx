@@ -45,7 +45,7 @@ export default function DashboardBillingSection({
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 active:scale-95"
+            className="cursor-pointer inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200 active:scale-95"
           >
             {hasActiveSubscription ? "Open Pro details" : "Get Pro"}
           </button>
@@ -68,7 +68,7 @@ export default function DashboardBillingSection({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="absolute right-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/80 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+              className="cursor-pointer absolute right-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/80 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
               aria-label="Close billing popup"
             >
               <X size={16} />
